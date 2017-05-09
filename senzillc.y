@@ -3,6 +3,7 @@
 Compiler for the Simple language 
 Author: Anthony A. Aaby
 Modified by: Jordi Planes
+Extended by: Cristian Sanahuja
 ***************************************************************************/ 
 /*========================================================================= 
 C Libraries, Symbol Table, Code Generator & other C code 
@@ -94,7 +95,8 @@ GRAMMAR RULES for the Simple language
 
 %% 
 
-program : LET declarations IN { gen_code( DATA, data_location() - 1 ); } 
+program : /* empty */
+        | LET declarations IN { gen_code( DATA, data_location() - 1 ); } 
           commands END { gen_code( HALT, 0 ); YYACCEPT; } 
 ; 
 
