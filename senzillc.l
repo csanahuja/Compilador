@@ -5,7 +5,7 @@ Modified by: Jordi Planes
 Extended by: Cristian Sanahuja
 ***************************************************************************/ 
 
-%x incl 
+%x incl multiline_comment single_comment
 %option nounput
 %option noinput
 
@@ -40,7 +40,6 @@ REGULAR EXPRESSIONS defining the tokens for the Simple language
 import                      BEGIN(incl);
 <incl>[ \t]*                /* eat the whitespaces */                                       
 <incl>[^ \t\n]+             { /* got the include file name */
-                            printf("%s\n",yytext);
                             if ( include_stack_ptr >= MAX_INCLUDE_DEPTH ){
                                 fprintf( stderr, "Includes nested too deeply \n" );
                                 exit( 1 );
@@ -63,6 +62,13 @@ import                      BEGIN(incl);
                                 include_stack[include_stack_ptr] );
                             }}
 
+
+"/*"                        BEGIN(multiline_comment);
+"#"                         BEGIN(single_comment);
+
+<multiline_comment>[^"*/"]* /* eat comment */
+<multiline_comment>"*/"     BEGIN(0);
+<single_comment>.*$         {BEGIN(0);}
 
 
 ":="                        { return(ASSGNOP); } 

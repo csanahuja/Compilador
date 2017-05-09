@@ -96,16 +96,16 @@ GRAMMAR RULES for the Simple language
 %% 
 
 program : /* empty */
-        | LET declarations IN { gen_code( DATA, data_location() - 1 ); } 
+        | LET declarations IN { gen_code( DATA, data_location() - 1 ); printf("Final\n");} 
           commands END { gen_code( HALT, 0 ); YYACCEPT; } 
 ; 
 
 declarations : /* empty */ 
-    | INTEGER id_seq IDENTIFIER '.' { install( $3 ); } 
+    | INTEGER id_seq IDENTIFIER '.' { install( $3 );} 
 ; 
 
 id_seq : /* empty */ 
-    | id_seq IDENTIFIER ',' { install( $2 ); } 
+    | id_seq IDENTIFIER ',' { install( $2 );  printf("Int\n");} 
 ; 
 
 commands : /* empty */ 
