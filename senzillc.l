@@ -5,7 +5,7 @@ Modified by: Jordi Planes
 Extended by: Cristian Sanahuja
 ***************************************************************************/ 
 
-%x incl multiline_comment single_comment
+%x incl multiline_comment single_comment string
 %option nounput
 %option noinput
 
@@ -16,6 +16,8 @@ C-libraries and Token definitions
 #include <string.h> /* for strdup */ 
 #include <stdlib.h> /* for atoi */ 
 #include "senzillc.tab.h" /* for token definitions and yylval */ 
+char * str;
+int i = 0;
 
 /*Include Related Info*/
 #define MAX_INCLUDE_DEPTH 10
@@ -70,6 +72,11 @@ import                      BEGIN(incl);
 <multiline_comment>"*/"     BEGIN(0);
 <single_comment>.*$         {BEGIN(0);}
 
+<string>[^\\"\n]*      { strcat(str, yytext); i += yyleng; }
+<string>\\n            { str[i++] = '\n'; }
+<string>\\t            { str[i++] = '\t'; }
+<string>\\[\\"]        { str[i++] = yytext[1]; }
+<string>\"             { str[i++] = '\0'; yylval.strval = strdup(str); BEGIN 0; return STR; }
 
 {DIGIT}+                    { yylval.intval = atoi( yytext ); 
                               return(NUMBER); }
@@ -81,7 +88,8 @@ end                         { return(END); }
 fi                          { return(FI); } 
 if                          { return(IF); } 
 in                          { return(IN); } 
-integer                     { return(INTEGER); } 
+"int"                       { return(INTEGER); }
+"str"                       { return STR; }
 let                         { return(LET); } 
 read                        { return(READ); } 
 skip                        { return(SKIP); } 

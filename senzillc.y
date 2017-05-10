@@ -67,6 +67,7 @@ SEMANTIC RECORDS
 %union /* semrec - The Semantic Records */ 
  { 
    int intval; /* Integer values */ 
+   char *strval; /* String values */
    char *id; /* Identifiers */ 
    struct lbs *lbls; /* For backpatching */ 
 };
@@ -76,6 +77,7 @@ TOKENS
 =========================================================================*/ 
 %start program 
 %token <intval> NUMBER /* Simple integer */ 
+%token <strval> STR
 %token <id> IDENTIFIER /* Simple identifier */ 
 %token <lbls> IF WHILE /* For backpatching labels */ 
 %token MAIN DEF
