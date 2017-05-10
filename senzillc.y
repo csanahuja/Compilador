@@ -78,9 +78,10 @@ TOKENS
 %token <intval> NUMBER /* Simple integer */ 
 %token <id> IDENTIFIER /* Simple identifier */ 
 %token <lbls> IF WHILE /* For backpatching labels */ 
+%token MAIN DEF
 %token SKIP THEN ELSE FI DO END 
 %token INTEGER READ WRITE LET IN 
-%token ASSGNOP 
+%token EQUAL OPEN CLOSE
 
 /*========================================================================= 
 OPERATOR PRECEDENCE 
@@ -96,16 +97,8 @@ GRAMMAR RULES for the Simple language
 %% 
 
 program : /* empty */
-        | LET declarations IN { gen_code( DATA, data_location() - 1 ); printf("Final\n");} 
-          commands END { gen_code( HALT, 0 ); YYACCEPT; } 
-; 
-
-declarations : /* empty */ 
-    | INTEGER id_seq IDENTIFIER '.' { install( $3 );} 
-; 
-
-id_seq : /* empty */ 
-    | id_seq IDENTIFIER ',' { install( $2 );  printf("Int\n");} 
+        | MAIN OPEN commands { gen_code( DATA, data_location() - 1 );} 
+          CLOSE { gen_code( HALT, 0 ); YYACCEPT; } 
 ; 
 
 commands : /* empty */ 
@@ -113,9 +106,10 @@ commands : /* empty */
 ; 
 
 command : SKIP 
+   | INTEGER id_seq IDENTIFIER ';' { install( $3 );} 
    | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); } 
    | WRITE exp { gen_code( WRITE_INT, 0 ); } 
-   | IDENTIFIER ASSGNOP exp { gen_code( STORE, context_check( $1 ) ); } 
+   | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1 ) ); } 
    | IF bool_exp { $1 = (struct lbs *) newlblrec(); $1->for_jmp_false = reserve_loc(); } 
    THEN commands { $1->for_goto = reserve_loc(); } ELSE { 
      back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); 
@@ -125,8 +119,13 @@ command : SKIP
    back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); } 
 ;
 
+id_seq : /* empty */ 
+    | id_seq IDENTIFIER ',' { install( $2 );} 
+; 
+
+
 bool_exp : exp '<' exp { gen_code( LT, 0 ); } 
-   | exp '=' exp { gen_code( EQ, 0 ); } 
+   | exp EQUAL exp { gen_code( EQ, 0 ); } 
    | exp '>' exp { gen_code( GT, 0 ); } 
 ;
 

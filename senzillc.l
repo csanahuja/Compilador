@@ -71,9 +71,10 @@ import                      BEGIN(incl);
 <single_comment>.*$         {BEGIN(0);}
 
 
-":="                        { return(ASSGNOP); } 
 {DIGIT}+                    { yylval.intval = atoi( yytext ); 
-                              return(NUMBER); } 
+                              return(NUMBER); }
+main                        { return(MAIN); }
+def                         { return(DEF); }
 do                          { return(DO); }
 else                        { return(ELSE); } 
 end                         { return(END); } 
@@ -87,6 +88,9 @@ skip                        { return(SKIP); }
 then                        { return(THEN); } 
 while                       { return(WHILE); } 
 write                       { return(WRITE); }
+"=="                        { return(EQUAL); }
+"¿"                         { return(OPEN); }
+"?"                         { return(CLOSE); }
 {ID}                        { yylval.id = (char *) strdup(yytext); return(IDENTIFIER); } 
 [ \t\n]+                    /* eat up whitespace */ 
 .                           { return(yytext[0]);} 
