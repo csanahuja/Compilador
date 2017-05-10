@@ -101,6 +101,10 @@ program : /* empty */
           CLOSE { gen_code( HALT, 0 ); YYACCEPT; } 
 ; 
 
+/*========================================================================= 
+COMMANDS
+=========================================================================*/ 
+
 commands : /* empty */ 
     | commands command ';' 
 ; 
@@ -117,6 +121,8 @@ command : SKIP
    | WHILE { $1 = (struct lbs *) newlblrec(); $1->for_goto = gen_label(); } 
    bool_exp { $1->for_jmp_false = reserve_loc(); } DO commands END { gen_code( GOTO, $1->for_goto ); 
    back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); } 
+   | DEF IDENTIFIER '(' parameters ')'
+   | IDENTIFIER '(' values ')' 
 ;
 
 id_seq : /* empty */ 
@@ -138,6 +144,25 @@ exp : NUMBER { gen_code( LD_INT, $1 ); }
    | exp '^' exp { gen_code( PWR, 0 ); } 
    | '(' exp ')' 
 ;
+
+parameters : /* empty */
+           | parameters param
+;
+
+param : INTEGER IDENTIFIER
+;
+
+values : /* empty */
+       | values value
+
+value: NUMBER
+;
+
+/*========================================================================= 
+FUNCTIONS
+=========================================================================*/ 
+
+
 
 %% 
 
