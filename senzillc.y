@@ -38,25 +38,26 @@ struct lbs * newlblrec() /* Allocate space for the labels */
 /*------------------------------------------------------------------------- 
 Install identifier & check if previously defined. 
 -------------------------------------------------------------------------*/ 
-void install ( char *sym_name ) 
+void install ( char *sym_name, int length ) 
 { 
   symrec *s = getsym (sym_name); 
   if (s == 0) 
-    s = putsym (sym_name); 
+    s = putsym (sym_name, length); 
   else { 
     char message[ 100 ];
     sprintf( message, "%s is already defined\n", sym_name ); 
     yyerror( message );
   } 
-} 
+}
 
 /*------------------------------------------------------------------------- 
 If identifier is defined, generate code 
 -------------------------------------------------------------------------*/ 
-int context_check( char *sym_name ) 
+int context_check( char *sym_name, int length ) 
 { 
-  symrec *identifier = getsym( sym_name ); 
-  return identifier->offset;
+  symrec *identifier = getsym( sym_name );
+  printf("%d\n",(identifier->offset) + length);
+  return (identifier->offset) + length;
 } 
 
 /*========================================================================= 
@@ -99,8 +100,8 @@ GRAMMAR RULES for the Simple language
 %% 
 
 program : /* empty */
-        | MAIN OPEN commands { gen_code( DATA, data_location() - 1 );} 
-          CLOSE { gen_code( HALT, 0 ); YYACCEPT; } 
+        | MAIN OPEN { gen_code( DATA, data_location() - 1 );} commands
+          CLOSE { back_patch( 0, DATA, data_location()-1) ; gen_code( HALT, 0 ); YYACCEPT; } 
 ; 
 
 /*========================================================================= 
@@ -112,23 +113,30 @@ commands : /* empty */
 ; 
 
 command : SKIP 
-   | INTEGER id_seq IDENTIFIER ';' { install( $3 );} 
-   | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); } 
+   | INTEGER id_seq
+   | INTEGER IDENTIFIER '[' NUMBER ']' { install( $2, $4); }
+
+   | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1, 0 ) ); } 
+   | IDENTIFIER '[' NUMBER ']' '=' exp { gen_code( STORE, context_check( $1, $3 ) ); } 
+
+   | DEF IDENTIFIER '(' parameters ')'
+   | IDENTIFIER '(' values ')' 
+
+   | READ IDENTIFIER { gen_code( READ_INT, context_check( $2, 0 ) ); } 
    | WRITE exp { gen_code( WRITE_INT, 0 ); } 
-   | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1 ) ); } 
+
    | IF bool_exp { $1 = (struct lbs *) newlblrec(); $1->for_jmp_false = reserve_loc(); } 
    THEN commands { $1->for_goto = reserve_loc(); } ELSE { 
      back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); 
    } commands FI { back_patch( $1->for_goto, GOTO, gen_label() ); } 
+   
    | WHILE { $1 = (struct lbs *) newlblrec(); $1->for_goto = gen_label(); } 
    bool_exp { $1->for_jmp_false = reserve_loc(); } DO commands END { gen_code( GOTO, $1->for_goto ); 
    back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); } 
-   | DEF IDENTIFIER '(' parameters ')'
-   | IDENTIFIER '(' values ')' 
 ;
 
-id_seq : /* empty */ 
-    | id_seq IDENTIFIER ',' { install( $2 );} 
+id_seq : IDENTIFIER { install( $1, 1 );} 
+    | id_seq IDENTIFIER ',' { install( $2, 1 );} 
 ; 
 
 
@@ -138,7 +146,8 @@ bool_exp : exp '<' exp { gen_code( LT, 0 ); }
 ;
 
 exp : NUMBER { gen_code( LD_INT, $1 ); } 
-   | IDENTIFIER { gen_code( LD_VAR, context_check( $1 ) ); } 
+   | IDENTIFIER { gen_code( LD_VAR, context_check( $1, 0) ); } 
+   | IDENTIFIER '[' NUMBER ']' { gen_code( LD_VAR, context_check( $1, $3) ); } 
    | exp '+' exp { gen_code( ADD, 0 ); } 
    | exp '-' exp { gen_code( SUB, 0 ); } 
    | exp '*' exp { gen_code( MULT, 0 ); } 

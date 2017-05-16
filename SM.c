@@ -35,8 +35,8 @@ void fetch_execute_cycle()
 { 
   do { 
 #ifndef NDEBUG    
-    printf( "PC = %3d IR.arg = %8d AR = %3d Top = %3d,%8d\n", 
-	    pc, ir.arg, ar, top, stack[top]); 
+    printf( "PC = %3d IR.op = %s IR.arg = %8d AR = %3d Top = %3d,%8d\n", 
+	    pc, op_name[(int) ir.op], ir.arg, ar, top, stack[top]); 
 #endif
     /* Fetch */ 
     ir = code[pc++]; 
@@ -51,7 +51,7 @@ void fetch_execute_cycle()
 	pc = ir.arg; 
       break; 
     case GOTO : pc = ir.arg; break; 
-    case CALL : stack[++top] = pc+1; pc = ir.arg; break;
+    case CALL : stack[++top] = pc; pc = ir.arg; break;
     case RET : pc = stack[top--]; break;
     case DATA : top = top + ir.arg; break; 
     case LD_INT : stack[++top] = ir.arg; break; 
