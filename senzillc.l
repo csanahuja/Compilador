@@ -72,6 +72,7 @@ import                      BEGIN(incl);
 <multiline_comment>"*/"     BEGIN(0);
 <single_comment>.*$         {BEGIN(0);}
 
+\"                     {BEGIN(string);  i = 0; str = malloc(sizeof(char) * 1024); }
 <string>[^\\"\n]*      { strcat(str, yytext); i += yyleng; }
 <string>\\n            { str[i++] = '\n'; }
 <string>\\t            { str[i++] = '\t'; }
