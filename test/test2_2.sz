@@ -1,0 +1,6 @@
+int b;
+import test2_3.sz
+
+b = c + 100;
+write b;
+write c;

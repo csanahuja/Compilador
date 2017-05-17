@@ -1,0 +1,24 @@
+/* This program checks if the comments, either multiple line or
+   single line comments works. If this works correctly it should
+   only print a, one time.
+
+   Expected output: 1
+*/
+
+
+main ¿
+
+    int a;
+    a = 1;
+
+    /* This is a multiple comment
+    int b;
+    d = 5;
+    write b;
+    */
+
+    write a;
+    # write a;
+    # write a;
+
+?
