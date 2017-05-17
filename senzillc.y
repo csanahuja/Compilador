@@ -53,11 +53,10 @@ void install ( char *sym_name, int length )
 /*------------------------------------------------------------------------- 
 If identifier is defined, generate code 
 -------------------------------------------------------------------------*/ 
-int context_check( char *sym_name, int length ) 
+int context_check( char *sym_name) 
 { 
   symrec *identifier = getsym( sym_name );
-  printf("%d\n",(identifier->offset) + length);
-  return (identifier->offset) + length;
+  return identifier->offset;
 } 
 
 /*========================================================================= 
@@ -116,13 +115,14 @@ command : SKIP
    | INTEGER id_seq
    | INTEGER IDENTIFIER '[' NUMBER ']' { install( $2, $4); }
 
-   | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1, 0 ) ); } 
-   | IDENTIFIER '[' NUMBER ']' '=' exp { gen_code( STORE, context_check( $1, $3 ) ); } 
+   | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1 ) ); } 
+   | IDENTIFIER '[' exp ']' '=' exp {  gen_code( LD_INT, context_check( $1 ) );
+                                       gen_code( STORE_SUBS, context_check( $1 )); }
 
    | DEF IDENTIFIER '(' parameters ')'
    | IDENTIFIER '(' values ')' 
 
-   | READ IDENTIFIER { gen_code( READ_INT, context_check( $2, 0 ) ); } 
+   | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); } 
    | WRITE exp { gen_code( WRITE_INT, 0 ); } 
 
    | IF bool_exp { $1 = (struct lbs *) newlblrec(); $1->for_jmp_false = reserve_loc(); } 
@@ -146,8 +146,9 @@ bool_exp : exp '<' exp { gen_code( LT, 0 ); }
 ;
 
 exp : NUMBER { gen_code( LD_INT, $1 ); } 
-   | IDENTIFIER { gen_code( LD_VAR, context_check( $1, 0) ); } 
-   | IDENTIFIER '[' NUMBER ']' { gen_code( LD_VAR, context_check( $1, $3) ); } 
+   | IDENTIFIER { gen_code( LD_VAR, context_check( $1 ) ); } 
+   | IDENTIFIER '[' exp ']' { gen_code( LD_INT, context_check( $1 ) );
+                              gen_code(LD_SUBS, 0); } 
    | exp '+' exp { gen_code( ADD, 0 ); } 
    | exp '-' exp { gen_code( SUB, 0 ); } 
    | exp '*' exp { gen_code( MULT, 0 ); } 

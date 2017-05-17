@@ -18,6 +18,7 @@ C-libraries and Token definitions
 #include "senzillc.tab.h" /* for token definitions and yylval */ 
 char * str;
 int i = 0;
+int num_lines = 0;
 
 /*Include Related Info*/
 #define MAX_INCLUDE_DEPTH 10

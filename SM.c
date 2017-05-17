@@ -11,7 +11,7 @@ Modified by: Jordi Planes
 char *op_name[] = {"halt", "store", "jmp_false", "goto", "call", "ret",
 		   "data", "ld_int", "ld_var", 
 		   "in_int", "out_int", 
-		   "lt", "eq", "gt", "add", "sub", "mult", "div", "pwr" }; 
+		   "lt", "eq", "gt", "add", "sub", "mult", "div", "pwr", "ld_subs", "store_subs" }; 
 
 /* CODE Array */ 
 struct instruction code[MAX_MEMORY];
@@ -35,8 +35,10 @@ void fetch_execute_cycle()
 { 
   do { 
 #ifndef NDEBUG    
-    printf( "PC = %3d IR.op = %s IR.arg = %8d AR = %3d Top = %3d,%8d\n", 
-	    pc, op_name[(int) ir.op], ir.arg, ar, top, stack[top]); 
+    int i;
+    printf( "PC = %3d IR.op = %-8s IR.arg = %8d AR = %3d Top = %3d,%8d\n", 
+  	    pc, op_name[(int) ir.op], ir.arg, ar, top, stack[top]); 
+    for( i = 0; i <= top; i++ ) printf("%2d: |%3d|\n", i, stack[i]);
 #endif
     /* Fetch */ 
     ir = code[pc++]; 
@@ -82,11 +84,17 @@ void fetch_execute_cycle()
       break; 
     case PWR : stack[top-1] = stack[top-1] * stack[top]; 
       top--; 
-      break; 
+      break;            
+    case LD_SUBS : stack[top-1] = stack[ stack[top-1] + stack[top] ];
+      top --;
+      break;
+    case STORE_SUBS : stack[ stack[top] + stack[top-2] ] = stack[top-1];
+      top -= 3;
+      break;
     default : printf( "%d Internal Error: Memory Dump\n", ir.op ); 
       break; 
     } 
-  } 
+  }
   while (ir.op != HALT); 
 } 
 /*************************** End Stack Machine **************************/ 

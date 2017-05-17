@@ -22,9 +22,9 @@ $(TARGET).tab.h $(TARGET).tab.c : $(TARGET).y
 lex.yy.c : $(TARGET).l
 	flex $(TARGET).l
 
-assembler : assembler.l SM.c CG.c ST.c
+assembler : assembler.l SM.c CG.c ST.c list.c
 	flex -o assembler.c assembler.l
-	$(CC) $(CFLAGS) assembler.c SM.c CG.c ST.c -o assembler -lm
+	$(CC) $(CFLAGS) assembler.c SM.c CG.c ST.c list.c -o assembler -lm
 	$(RM) assembler.c
 
 clean:

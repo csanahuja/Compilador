@@ -11,7 +11,7 @@ DECLARATIONS
 enum code_ops { HALT, STORE, JMP_FALSE, GOTO, CALL, RET,
 		DATA, LD_INT, LD_VAR, 
 		READ_INT, WRITE_INT, 
-		LT, EQ, GT, ADD, SUB, MULT, DIV, PWR }; 
+		LT, EQ, GT, ADD, SUB, MULT, DIV, PWR, LD_SUBS, STORE_SUBS }; 
 
 struct instruction 
 { 
