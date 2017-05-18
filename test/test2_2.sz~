@@ -1,6 +1,0 @@
-int b;
-import test2_3.¿?
-
-b = c + 100;
-write b;
-write c;
