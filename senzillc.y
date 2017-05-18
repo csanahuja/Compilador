@@ -99,7 +99,7 @@ GRAMMAR RULES for the Simple language
 %% 
 
 program : /* empty */
-        | MAIN OPEN { gen_code( DATA, data_location() - 1 );} commands
+        | MAIN OPEN { gen_code( DATA, data_location()-1);} commands
           CLOSE { back_patch( 0, DATA, data_location()-1) ; gen_code( HALT, 0 ); YYACCEPT; } 
 ; 
 
@@ -116,8 +116,7 @@ command : SKIP
    | INTEGER IDENTIFIER '[' NUMBER ']' { install( $2, $4); }
 
    | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1 ) ); } 
-   | IDENTIFIER '[' exp ']' '=' exp {  gen_code( LD_INT, context_check( $1 ) );
-                                       gen_code( STORE_SUBS, context_check( $1 )); }
+   | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check( $1 )); }
 
    | DEF IDENTIFIER '(' parameters ')'
    | IDENTIFIER '(' values ')' 
@@ -136,7 +135,7 @@ command : SKIP
 ;
 
 id_seq : IDENTIFIER { install( $1, 1 );} 
-    | id_seq IDENTIFIER ',' { install( $2, 1 );} 
+    | id_seq ',' IDENTIFIER  { install( $3, 1 );} 
 ; 
 
 
@@ -147,8 +146,7 @@ bool_exp : exp '<' exp { gen_code( LT, 0 ); }
 
 exp : NUMBER { gen_code( LD_INT, $1 ); } 
    | IDENTIFIER { gen_code( LD_VAR, context_check( $1 ) ); } 
-   | IDENTIFIER '[' exp ']' { gen_code( LD_INT, context_check( $1 ) );
-                              gen_code(LD_SUBS, 0); } 
+   | IDENTIFIER '[' exp ']' { gen_code(LD_SUBS, context_check( $1 )); } 
    | exp '+' exp { gen_code( ADD, 0 ); } 
    | exp '-' exp { gen_code( SUB, 0 ); } 
    | exp '*' exp { gen_code( MULT, 0 ); } 

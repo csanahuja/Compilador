@@ -1,12 +1,12 @@
 /* This program checks the arrays
 
-   Expected output: 1
+   Expected output: 0, 1, 2, 3, 4
 */
 
 
 main ¿
 
-    int a[4];
+    int a[5];
     a[0] = 0;
     a[1] = 1;
     a[2] = 2;

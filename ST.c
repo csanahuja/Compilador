@@ -39,7 +39,7 @@ symrec * putsym (char *sym_name, int length)
   for(i = 1; i < length; i++)
     data_location();
   ptr->next = (struct symrec *)sym_table; 
-  sym_table = ptr; 
+  sym_table = ptr;
   return ptr; 
 } 
 

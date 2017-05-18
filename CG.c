@@ -10,7 +10,7 @@ Modified by: Jordi Planes
 /*------------------------------------------------------------------------- 
 Data Segment 
 -------------------------------------------------------------------------*/ 
-int data_offset = 0; /* Initial offset */ 
+int data_offset = -1; /* Initial offset */ 
 int data_location() /* Reserves a data location */ 
 { 
   return data_offset++; 
