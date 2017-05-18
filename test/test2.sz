@@ -5,7 +5,7 @@
 
 main ¿
 
-    import test2_1.sz
-    import test2_2.sz
+    import test/test2_1.sz
+    import test/test2_2.sz
 
 ?

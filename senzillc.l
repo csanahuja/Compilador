@@ -51,7 +51,7 @@ import                      BEGIN(incl);
                             YY_CURRENT_BUFFER;
                             yyin = fopen( yytext, "r" );
                             if ( ! yyin ){
-                                printf("File not found\n");
+                                printf("Import file: \"%s\" not found\n", yytext);
                                 exit(1);
                                 }
                             }
