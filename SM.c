@@ -52,7 +52,7 @@ void fetch_execute_cycle()
     case JMP_FALSE : if ( stack[top--] == 0 ) 
 	pc = ir.arg; 
       break; 
-    case GOTO : pc = ir.arg; break; 
+    case GOTO : pc = ir.arg; break;
     case CALL : stack[++top] = pc; pc = ir.arg; break;
     case RET : pc = stack[top--]; break;
     case DATA : top = top + ir.arg; break; 

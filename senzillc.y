@@ -108,7 +108,7 @@ COMMANDS
 =========================================================================*/ 
 
 commands : /* empty */ 
-    | commands command ';' 
+    | commands command ';'
 ; 
 
 command : SKIP 
@@ -118,8 +118,11 @@ command : SKIP
    | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1 ) ); } 
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check( $1 )); }
 
-   | DEF IDENTIFIER '(' parameters ')'
-   | IDENTIFIER '(' values ')' 
+   | {gen_code(GOTO, 10);}
+     DEF IDENTIFIER '(' parameters ')' { install($3, 1); gen_code( LD_INT, gen_label()); gen_code( STORE, context_check($3));} 
+     OPEN commands CLOSE { gen_code( RET, 0); back_patch( context_check($3)-1, GOTO, gen_label()+11);}
+
+   | IDENTIFIER '(' values ')' { gen_code( CALL, context_check( $1) );}
 
    | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); } 
    | WRITE exp { gen_code( WRITE_INT, 0 ); } 

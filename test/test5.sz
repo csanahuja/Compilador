@@ -1,0 +1,14 @@
+/* This program checks the functions
+*/
+
+
+main ¿
+    int a;
+    a = 5;
+    def function() ¿ 
+        a = 10;
+    ?;
+    write a;
+    #function();
+    write a;
+?
