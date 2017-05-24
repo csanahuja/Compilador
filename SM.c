@@ -53,7 +53,7 @@ void fetch_execute_cycle()
 	pc = ir.arg; 
       break; 
     case GOTO : pc = ir.arg; break;
-    case CALL : stack[++top] = pc; pc = ir.arg; break;
+    case CALL : stack[++top] = pc; pc = stack[top-1] + ir.arg; break;
     case RET : pc = stack[top--]; break;
     case DATA : top = top + ir.arg; break; 
     case LD_INT : stack[++top] = ir.arg; break; 

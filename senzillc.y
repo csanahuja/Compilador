@@ -21,6 +21,7 @@ int yyerror(char *);
 int yylex();
 
 int errors; /* Error Count */ 
+int start_function;
 /*------------------------------------------------------------------------- 
 The following support backpatching 
 -------------------------------------------------------------------------*/ 
@@ -115,14 +116,15 @@ command : SKIP
    | INTEGER id_seq_int
    | INTEGER id_seq_int_array
 
-   | IDENTIFIER '=' exp { gen_code( STORE, context_check( $1 ) ); } 
-   | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check( $1 )); }
+   | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); } 
+   | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
 
-   | {gen_code(GOTO, 10);}
-     DEF IDENTIFIER '(' parameters ')' { install($3, 1); gen_code( LD_INT, gen_label()); gen_code( STORE, context_check($3));} 
-     OPEN commands CLOSE { gen_code( RET, 0); back_patch( context_check($3)-1, GOTO, gen_label()+11);}
+   | DEF IDENTIFIER '(' parameters ')' 
+         { install($2, 1); gen_code( LD_INT, gen_label()+3); gen_code( STORE, context_check($2));
+           start_function = gen_label(); gen_code(GOTO, 0);}
+     OPEN commands CLOSE { gen_code( RET, 0); back_patch( start_function, GOTO, gen_label());}
 
-   | IDENTIFIER '(' values ')' { gen_code( CALL, context_check( $1) );}
+   | IDENTIFIER '(' values ')' { gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
 
    | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); } 
    | WRITE exp { gen_code( WRITE_INT, 0 ); } 

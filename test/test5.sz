@@ -1,4 +1,5 @@
-/* This program checks the functions
+/* This program checks the functions without
+   parameters
 */
 
 
@@ -9,6 +10,6 @@ main ¿
         a = 10;
     ?;
     write a;
-    #function();
+    function();
     write a;
 ?
