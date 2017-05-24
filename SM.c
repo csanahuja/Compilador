@@ -23,6 +23,7 @@ int stack[MAX_MEMORY];
   Registers 
   -------------------------------------------------------------------------*/ 
 int pc = 0; 
+int temp;
 struct instruction ir; 
 int ar = 0; 
 int top = 0; 
@@ -53,7 +54,7 @@ void fetch_execute_cycle()
 	pc = ir.arg; 
       break; 
     case GOTO : pc = ir.arg; break;
-    case CALL : stack[++top] = pc; pc = stack[top-1] + ir.arg; break;
+    case CALL : temp = stack[top]; stack[top] = pc; pc = temp + ir.arg; break;
     case RET : pc = stack[top--]; break;
     case DATA : top = top + ir.arg; break; 
     case LD_INT : stack[++top] = ir.arg; break; 
