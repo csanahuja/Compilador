@@ -1,0 +1,14 @@
+/* This program checks the functions without
+   parameters
+*/
+
+
+main ¿
+    int a;
+    a = 5;
+    def function(int a) ¿ 
+        write a
+    ?;
+    function(10);
+    write a;
+?

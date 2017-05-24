@@ -31,7 +31,7 @@ int include_stack_ptr = 0;
 TOKEN Definitions 
 =========================================================================*/ 
 DIGIT [0-9] 
-ID [a-z][a-z0-9]* 
+ID [a-z][a-zA-Z0-9]* 
 
 /*========================================================================= 
 REGULAR EXPRESSIONS defining the tokens for the Simple language 

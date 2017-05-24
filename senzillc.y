@@ -22,6 +22,8 @@ int yylex();
 
 int errors; /* Error Count */ 
 int start_function;
+char *scope = "GLOBAL";
+
 /*------------------------------------------------------------------------- 
 The following support backpatching 
 -------------------------------------------------------------------------*/ 
@@ -37,13 +39,44 @@ struct lbs * newlblrec() /* Allocate space for the labels */
 }
 
 /*------------------------------------------------------------------------- 
+Scope related functions
+-------------------------------------------------------------------------*/ 
+
+struct func 
+{ 
+    char *scope; 
+    int start_function;
+    int num_params;  
+}; 
+
+
+void installFunction(struct func f; char* scope) {
+    f = malloc(sizeof(struct func));
+    f->scope = strdup(scope);
+    f->start_fuction = 0;
+    f->num_params = 0;
+}
+
+void openScope ( char *new_scope) {
+    scope = strdup(new_scope);
+}
+
+void closeScope (){
+    scope = strdup("GLOBAL");
+}
+
+void installParameter(){
+
+}
+
+/*------------------------------------------------------------------------- 
 Install identifier & check if previously defined. 
 -------------------------------------------------------------------------*/ 
-void install ( char *sym_name, int length ) 
+void install ( char *sym_name, int length) 
 { 
   symrec *s = getsym (sym_name); 
   if (s == 0) 
-    s = putsym (sym_name, length); 
+    s = putsym (sym_name, length, scope); 
   else { 
     char message[ 100 ];
     sprintf( message, "%s is already defined\n", sym_name ); 
@@ -70,7 +103,8 @@ SEMANTIC RECORDS
    int intval; /* Integer values */ 
    char *strval; /* String values */
    char *id; /* Identifiers */ 
-   struct lbs *lbls; /* For backpatching */ 
+   struct lbs *lbls; /* For backpatching */
+   struct func 
 };
 
 /*========================================================================= 
@@ -85,6 +119,8 @@ TOKENS
 %token SKIP THEN ELSE FI DO END 
 %token INTEGER READ WRITE LET IN 
 %token EQUAL OPEN CLOSE
+
+%type <func> def
 
 /*========================================================================= 
 OPERATOR PRECEDENCE 
@@ -118,10 +154,9 @@ command : SKIP
    | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); } 
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
 
-   | DEF IDENTIFIER '(' parameters ')' 
-         { install($2, 1); gen_code( LD_INT, gen_label()+3); gen_code( STORE, context_check($2));
-           start_function = gen_label(); gen_code(GOTO, 0);}
-     OPEN commands CLOSE { gen_code( RET, 0); back_patch( start_function, GOTO, gen_label());}
+   | DEF IDENTIFIER { installFunction($1, $2); install($2, 1); gen_code( LD_INT, gen_label()+3); gen_code( STORE, context_check($2));
+                      $1->start_function = gen_label(); gen_code(GOTO, 0);}
+    '(' parameters ')' OPEN commands CLOSE { gen_code( RET, 0); back_patch( $1->start_function, GOTO, gen_label());closeScope();}
 
    | IDENTIFIER '(' values ')' { gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
 
@@ -163,16 +198,18 @@ exp : NUMBER { gen_code( LD_INT, $1 ); }
 ;
 
 parameters : /* empty */
-           | parameters param
+           | param
+           | parameters ',' param
 ;
 
-param : INTEGER IDENTIFIER
+param : INTEGER IDENTIFIER {install_parameter( $1, 1 );}
 ;
 
 values : /* empty */
-       | values value
+       | value
+       | values ',' value
 
-value: NUMBER
+value: exp {gen_code( STORE_SUBS, context_check($1));}
 ;
 
 /*========================================================================= 

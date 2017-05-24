@@ -9,7 +9,12 @@ main ¿
     def function() ¿ 
         a = 10;
     ?;
+    def function2() ¿
+        a = 15;
+    ?;
     write a;
     function();
+    write a;
+    function2();
     write a;
 ?

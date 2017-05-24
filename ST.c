@@ -28,12 +28,15 @@ symrec *sym_table = (symrec *)0; /* The pointer to the Symbol Table */
 /*======================================================================== 
   Operations: Putsym, Getsym 
   ========================================================================*/ 
-symrec * putsym (char *sym_name, int length) 
+symrec * putsym (char *sym_name, int length, char *scope) 
 { 
   symrec *ptr; 
   ptr = (symrec *) malloc (sizeof(symrec)); 
   ptr->name = (char *) malloc (strlen(sym_name)+1); 
+  ptr->scope = (char *) malloc (strlen(scope)+1); 
+  ptr->length = length;
   strcpy (ptr->name,sym_name); 
+  strcpy (ptr->scope,scope);
   ptr->offset = data_location();
   int i;
   for(i = 1; i < length; i++)
