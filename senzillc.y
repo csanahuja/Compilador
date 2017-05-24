@@ -114,7 +114,6 @@ commands : /* empty */
 
 command : SKIP 
    | INTEGER id_seq_int
-   | INTEGER id_seq_int_array
 
    | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); } 
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
@@ -139,12 +138,12 @@ command : SKIP
    back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); } 
 ;
 
-id_seq_int : IDENTIFIER { install( $1, 1 );} 
+id_seq_int : IDENTIFIER { install( $1, 1 );}
+    | IDENTIFIER '[' NUMBER ']' { install( $1, $3); }
     | id_seq_int ',' IDENTIFIER  { install( $3, 1 );} 
+    | id_seq_int ',' IDENTIFIER '[' NUMBER ']' { install( $3, $5); }
 ;
 
-id_seq_int_array: IDENTIFIER '[' NUMBER ']' { install( $1, $3); }
-    | id_seq_int_array ',' IDENTIFIER '[' NUMBER ']' { install( $3, $5); }
 
 
 bool_exp : exp '<' exp { gen_code( LT, 0 ); } 
