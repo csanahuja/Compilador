@@ -5,11 +5,18 @@
 
 main ¿
     int a;
-    a = 3;
+    a = 4;
 
     def function() ¿
         int a;
-        a = 1;
+        a = 2;
+        def function2()¿
+          int a;
+          a = 1;
+          write a;
+        ?;
+
+        function2();
         write a;
     ?;
 
@@ -18,6 +25,6 @@ main ¿
     ?;
 
     function();
-    function2(2);
+    function2(3);
     write a;
 ?
