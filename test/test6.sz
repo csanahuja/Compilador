@@ -5,10 +5,19 @@
 
 main ¿
     int a;
-    a = 5;
-    def function(int a) ¿ 
-        write a
+    a = 3;
+
+    def function() ¿
+        int a;
+        a = 1;
+        write a;
     ?;
-    function(10);
+
+    def function2(int a) ¿
+        write a;
+    ?;
+
+    function();
+    function2(2);
     write a;
 ?
