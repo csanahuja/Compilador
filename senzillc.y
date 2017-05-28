@@ -50,14 +50,6 @@ struct func * newfunc() {
    return (struct func *) malloc(sizeof(struct func));
 }
 
-void openScope ( char *new_scope) {
-    pushScope(new_scope);
-}
-
-void closeScope (){
-    popScope();
-}
-
 /*-------------------------------------------------------------------------
 Install identifier & check if previously defined.
 -------------------------------------------------------------------------*/
@@ -68,7 +60,7 @@ void install ( char *sym_name, int length)
     s = putsym (sym_name, length);
   }else {
     char message[ 100 ];
-    sprintf( message, "ALREADY DEFINED => Variable: %s Scope: %s", sym_name, getCurrentScope() );
+    sprintf( message, "ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
     yyerror( message );
   }
 }
@@ -81,7 +73,7 @@ int context_check( char *sym_name)
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   if (identifier == 0){
     char message[ 100 ];
-    sprintf( message, "NOT DEFINED => Variable: %s Scope: %s", sym_name, getCurrentScope() );
+    sprintf( message, "NOT DEFINED => Variable: %s in the current Scope", sym_name);
     yyerror( message );
     return -1;
   }
@@ -148,12 +140,12 @@ command : SKIP
    | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); }
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
 
-   | DEF IDENTIFIER { $1 = (struct func *) newfunc(); install($2, 1); openScope($2);
+   | DEF IDENTIFIER { $1 = (struct func *) newfunc(); install($2, 1); pushScope();
                       gen_code( LD_INT, gen_label()+3);
                       gen_code( STORE, context_check($2));
                       $1->start_function = gen_label(); gen_code(GOTO, 0);}
     '(' parameters ')' OPEN commands CLOSE { gen_code( RET, 0);
-               back_patch( $1->start_function, GOTO, gen_label());closeScope();}
+               back_patch( $1->start_function, GOTO, gen_label());popScope();}
 
    | IDENTIFIER '(' values ')' { gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
 

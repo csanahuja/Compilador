@@ -35,7 +35,7 @@ symrec * putsym (char *sym_name, int length)
   ptr = (symrec *) malloc (sizeof(symrec));
   ptr->name = strdup(sym_name);
 
-  ptr->scope = strdup(getCurrentScope());
+  ptr->scope = getCurrentScope();
   ptr->offset = data_location();
   ptr->length = length;
 
@@ -47,18 +47,17 @@ symrec * putsym (char *sym_name, int length)
   return ptr;
 }
 
-symrec * getsym (char *sym_name, char* scope, int previous_level)
+symrec * getsym (char *sym_name, int scope, int previous_level)
 {
-  if (scope==0)
-    return NULL;
-
   symrec *ptr;
   for ( ptr = sym_table;
 	ptr != (symrec *) 0;
 	ptr = (symrec *)ptr->next )
     if (strcmp (ptr->name,sym_name) == 0)
-      if(strcmp (ptr->scope,scope) == 0)
+      if(ptr->scope == scope)
         return ptr;
+  if (scope==0)
+    return NULL;
   return getsym(sym_name, getPreviousScope(previous_level+1), previous_level+1);
 }
 
@@ -69,7 +68,7 @@ symrec * getsymOnCurrentScope (char *sym_name)
 	ptr != (symrec *) 0;
 	ptr = (symrec *)ptr->next )
     if (strcmp (ptr->name,sym_name) == 0)
-      if(strcmp (ptr->scope,getCurrentScope()) == 0)
+      if(ptr->scope == getCurrentScope())
         return ptr;
   return NULL;
 }
@@ -85,27 +84,30 @@ scope_stack* s_scope;
 void initScopeStack(){
     s_scope = (scope_stack *) malloc(sizeof(scope_stack));
     s_scope->size = 0;
+    s_scope->num_scopes = 0;
 }
 
-char* getCurrentScope(){
+int getCurrentScope(){
     if (s_scope->size == 0) {
-        return "GLOBAL";
+        return 0;
     }
 
     return s_scope->data[s_scope->size-1];
 }
 
-char* getPreviousScope(int previous_level){
+int getPreviousScope(int previous_level){
   int index = s_scope->size - 1 - previous_level;
   if (index < 0) {
-      return "GLOBAL";
+      return 0;
   }
   return s_scope->data[index];
 }
 
-void pushScope(char* scope){
-    if (s_scope->size < STACK_MAX)
-        s_scope->data[s_scope->size++] = strdup(scope);
+void pushScope(){
+    if (s_scope->size < STACK_MAX){
+        s_scope->num_scopes++;
+        s_scope->data[s_scope->size++] = s_scope->num_scopes;
+    }
     else
         fprintf(stderr, "Error: stack full\n");
 }
