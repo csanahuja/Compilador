@@ -1,11 +1,12 @@
-/* This program checks the functions without
-   parameters
+/* This program checks the functions scopes and functions
+   with parameters
+   Expected output: 1 2 3 4 5
 */
 
 
 main ¿
     int a;
-    a = 4;
+    a = 5;
 
     def function() ¿
         int a;
@@ -20,11 +21,12 @@ main ¿
         write a;
     ?;
 
-    def function2(int a) ¿
+    def function2(int a, int a2) ¿
         write a;
+        write a2;
     ?;
 
     function();
-    function2(3);
+    function2(3, 4);
     write a;
 ?

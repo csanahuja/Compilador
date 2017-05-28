@@ -40,24 +40,41 @@ struct lbs * newlblrec() /* Allocate space for the labels */
 Scope related functions
 -------------------------------------------------------------------------*/
 
+int num_params = 0;
+int position = 0;
+int scope;
+char* active_function = NULL;
+
 struct func
 {
     int start_function;
-    int num_params;
 };
 
 struct func * newfunc() {
    return (struct func *) malloc(sizeof(struct func));
 }
 
+void setFunctionValues(char *sym_name, int num_params, int inner_scope){
+  symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
+  identifier->length = num_params;
+  identifier->inner_scope = inner_scope;
+}
+
+void getFunctionValues(char *sym_name){
+  symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
+  num_params = identifier->length;
+  scope = identifier->inner_scope;
+  active_function = strdup(sym_name);
+}
+
 /*-------------------------------------------------------------------------
 Install identifier & check if previously defined.
 -------------------------------------------------------------------------*/
-void install ( char *sym_name, int length)
+void install ( char *sym_name, int length, int position)
 {
   symrec *s = getsymOnCurrentScope (sym_name);
   if (s == 0){
-    s = putsym (sym_name, length);
+    s = putsym (sym_name, length, position);
   }else {
     char message[ 100 ];
     sprintf( message, "ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
@@ -73,7 +90,28 @@ int context_check( char *sym_name)
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   if (identifier == 0){
     char message[ 100 ];
-    sprintf( message, "NOT DEFINED => Variable: %s in the current Scope", sym_name);
+    if (active_function == 0)
+      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
+    else
+      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+    yyerror( message );
+    return -1;
+  }
+  return identifier->offset;
+}
+
+int context_check_param()
+{
+  if (position > num_params){
+    char message[ 100 ];
+    sprintf( message, "EXCEED ARGUMENTS => Function %s requires %i params", active_function, num_params);
+    yyerror( message );
+    return -1;
+  }
+  symrec *identifier = getsymArgument(position, scope);
+  if (identifier == 0){
+    char message[ 100 ];
+    sprintf( message, "CANNOT GET PARAM => Function %s position %i", active_function, position);
     yyerror( message );
     return -1;
   }
@@ -140,14 +178,16 @@ command : SKIP
    | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); }
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
 
-   | DEF IDENTIFIER { $1 = (struct func *) newfunc(); install($2, 1); pushScope();
+   | DEF IDENTIFIER { $1 = (struct func *) newfunc(); install($2, 1, 0); pushScope();
                       gen_code( LD_INT, gen_label()+3);
                       gen_code( STORE, context_check($2));
                       $1->start_function = gen_label(); gen_code(GOTO, 0);}
-    '(' parameters ')' OPEN commands CLOSE { gen_code( RET, 0);
+    '(' parameters ')' {setFunctionValues($2,num_params, getCurrentScope());}
+    OPEN commands CLOSE { gen_code( RET, 0);
                back_patch( $1->start_function, GOTO, gen_label());popScope();}
 
-   | IDENTIFIER '(' values ')' { gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
+   | IDENTIFIER {getFunctionValues($1);}
+    '(' values ')' { gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
 
    | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); }
    | WRITE exp { gen_code( WRITE_INT, 0 ); }
@@ -162,10 +202,10 @@ command : SKIP
    back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); }
 ;
 
-id_seq_int : IDENTIFIER { install( $1, 1 );}
-    | IDENTIFIER '[' NUMBER ']' { install( $1, $3); }
-    | id_seq_int ',' IDENTIFIER  { install( $3, 1 );}
-    | id_seq_int ',' IDENTIFIER '[' NUMBER ']' { install( $3, $5); }
+id_seq_int : IDENTIFIER { install( $1, 1, 0 );}
+    | IDENTIFIER '[' NUMBER ']' { install( $1, $3, 0); }
+    | id_seq_int ',' IDENTIFIER  { install( $3, 1, 0 );}
+    | id_seq_int ',' IDENTIFIER '[' NUMBER ']' { install( $3, $5, 0); }
 ;
 
 
@@ -191,14 +231,14 @@ parameters : /* empty */
            | parameters ',' param
 ;
 
-param : INTEGER IDENTIFIER {install( $2, 1 );}
+param : INTEGER IDENTIFIER {num_params++; install( $2, 1, num_params );}
 ;
 
 values : /* empty */
        | value
        | values ',' value
 
-value: exp //{gen_code( STORE_SUBS, context_check($1));}
+value: exp { position++; gen_code( STORE, context_check_param()); }
 ;
 
 /*=========================================================================

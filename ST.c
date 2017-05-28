@@ -29,7 +29,7 @@ symrec *sym_table = (symrec *)0; /* The pointer to the Symbol Table */
 /*========================================================================
   Operations: Putsym, Getsym
   ========================================================================*/
-symrec * putsym (char *sym_name, int length)
+symrec * putsym (char *sym_name, int length, int position)
 {
   symrec *ptr;
   ptr = (symrec *) malloc (sizeof(symrec));
@@ -38,6 +38,7 @@ symrec * putsym (char *sym_name, int length)
   ptr->scope = getCurrentScope();
   ptr->offset = data_location();
   ptr->length = length;
+  ptr->position = position;
 
   int i;
   for(i = 1; i < length; i++)
@@ -69,6 +70,18 @@ symrec * getsymOnCurrentScope (char *sym_name)
 	ptr = (symrec *)ptr->next )
     if (strcmp (ptr->name,sym_name) == 0)
       if(ptr->scope == getCurrentScope())
+        return ptr;
+  return NULL;
+}
+
+symrec * getsymArgument (int position, int scope)
+{
+  symrec *ptr;
+  for ( ptr = sym_table;
+	ptr != (symrec *) 0;
+	ptr = (symrec *)ptr->next )
+    if (ptr->position == position)
+      if(ptr->scope == scope)
         return ptr;
   return NULL;
 }
