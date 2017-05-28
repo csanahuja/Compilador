@@ -1,0 +1,13 @@
+/* This program checks if the compilation fails when
+   not enough arguments passed by parameter
+*/
+main ¿
+
+    def function(int a, int b, int c) ¿
+        write a;
+        write b;
+        write c;
+    ?;
+
+    function(1,2);
+?

@@ -80,14 +80,14 @@ int context_check_param()
 {
   if (position > num_params){
     char message[ 100 ];
-    sprintf( message, "EXCEED ARGUMENTS => Function %s requires %i params", active_function, num_params);
+    sprintf( message, "EXCEED ARGUMENTS => Function: %s requires: %i arguments", active_function, num_params);
     yyerror( message );
     exit(-1);
   }
   symrec *identifier = getsymArgument(position, scope);
   if (identifier == 0){
     char message[ 100 ];
-    sprintf( message, "CANNOT GET PARAM => Function %s position %i", active_function, position);
+    sprintf( message, "CANNOT GET ARGUMENT => Function: %s position: %i", active_function, position);
     yyerror( message );
     exit(-1);
   }
@@ -152,6 +152,12 @@ void loadFunctionValues(char *sym_name){
 
 /* Function to unload the values of the active function */
 void unloadFunctionValues(){
+  if (position < num_params){
+    char message[ 100 ];
+    sprintf( message, "NOT ENOUGH ARGUMENTS => Function: %s requires %i arguments", active_function, num_params);
+    yyerror( message );
+    exit(-1);
+  }
   active_function=NULL;
   position=0;
   num_params=0;
