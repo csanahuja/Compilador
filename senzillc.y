@@ -98,6 +98,9 @@ int context_check_param()
 FUNCTIONS RELATED METHODS
 -------------------------------------------------------------------------*/
 
+/* Function to install functions, we install the var and save the address, set
+   scope and return where the function stars
+*/
 int installFunction(char * sym_name){
   int start_function;
   install(sym_name, 1, 0);
@@ -109,17 +112,29 @@ int installFunction(char * sym_name){
   return start_function;
 }
 
+/* Function to close scope and do a backpath of the goto to where the function
+   definition ends
+*/
+void endFunction(int start_function){
+  gen_code( RET, 0);
+  back_patch( start_function, GOTO, gen_label());
+  popScope();
+}
+
 /* Function to save the scope of function, number of params and set position
    back to 0 to the next function
 */
-void setFunctionValues(char *sym_name, int inner_scope){
+void saveFunctionValues(char *sym_name, int inner_scope){
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   identifier->length = position;
   identifier->inner_scope = inner_scope;
   position=0;
 }
 
-void getFunctionValues(char *sym_name){
+/* Function to load the number of arguments, its scope and set this function to
+   the active_function. If function not found the program will exit
+*/
+void loadFunctionValues(char *sym_name){
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   if(identifier == 0){
     char message[ 100 ];
@@ -134,6 +149,21 @@ void getFunctionValues(char *sym_name){
   scope = identifier->inner_scope;
   active_function = strdup(sym_name);
 }
+
+/* Function to unload the values of the active function */
+void unloadFunctionValues(){
+  active_function=NULL;
+  position=0;
+  num_params=0;
+}
+
+/* Function to call a function*/
+void callFunction(char *sym_name){
+  unloadFunctionValues();
+  gen_code(LD_VAR, context_check(sym_name));
+  gen_code( CALL, 0);
+}
+
 
 /*=========================================================================
 SEMANTIC RECORDS
@@ -196,12 +226,11 @@ command : SKIP
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
 
    | DEF IDENTIFIER { $1 = installFunction($2);}
-    '(' parameters ')' {setFunctionValues($2, getCurrentScope());}
-    OPEN commands CLOSE { gen_code( RET, 0);
-               back_patch( $1, GOTO, gen_label());popScope();}
+    '(' parameters ')' {saveFunctionValues($2, getCurrentScope());}
+    OPEN commands CLOSE { endFunction($1);}
 
-   | IDENTIFIER {getFunctionValues($1);}
-    '(' values ')' { active_function=NULL;position=0;gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
+   | IDENTIFIER {loadFunctionValues($1);}
+    '(' values ')' { callFunction($1);}
 
    | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); }
    | WRITE exp { gen_code( WRITE_INT, 0 ); }
