@@ -22,6 +22,13 @@ int yylex();
 
 int errors; /* Error Count */
 
+/* Functions variables */
+int num_params = 0;
+int position = 0;
+int scope;
+char* active_function = NULL;
+
+
 /*-------------------------------------------------------------------------
 The following support backpatching
 -------------------------------------------------------------------------*/
@@ -34,48 +41,6 @@ struct lbs /* Labels for data, if and while */
 struct lbs * newlblrec() /* Allocate space for the labels */
 {
    return (struct lbs *) malloc(sizeof(struct lbs));
-}
-
-/*-------------------------------------------------------------------------
-Scope related functions
--------------------------------------------------------------------------*/
-
-int num_params = 0;
-int position = 0;
-int scope;
-char* active_function = NULL;
-
-struct func
-{
-    int start_function;
-};
-
-struct func * newfunc() {
-   return (struct func *) malloc(sizeof(struct func));
-}
-
-void setFunctionValues(char *sym_name, int num_params, int inner_scope){
-  symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
-  identifier->length = num_params;
-  identifier->inner_scope = inner_scope;
-}
-
-void getFunctionValues(char *sym_name){
-  symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
-  if(identifier == 0){
-    char message[ 100 ];
-    if (active_function == 0)
-      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
-    else
-      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
-    yyerror( message );
-    exit(1);
-  }else{
-  num_params = identifier->length;
-  scope = identifier->inner_scope;
-  active_function = strdup(sym_name);
-}
-
 }
 
 /*-------------------------------------------------------------------------
@@ -129,6 +94,47 @@ int context_check_param()
   return identifier->offset;
 }
 
+/*-------------------------------------------------------------------------
+FUNCTIONS RELATED METHODS
+-------------------------------------------------------------------------*/
+
+int installFunction(char * sym_name){
+  int start_function;
+  install(sym_name, 1, 0);
+  pushScope();
+  gen_code( LD_INT, gen_label()+3);
+  gen_code( STORE, context_check(sym_name));
+  start_function = gen_label();
+  gen_code(GOTO, 0);
+  return start_function;
+}
+
+/* Function to save the scope of function, number of params and set position
+   back to 0 to the next function
+*/
+void setFunctionValues(char *sym_name, int inner_scope){
+  symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
+  identifier->length = position;
+  identifier->inner_scope = inner_scope;
+  position=0;
+}
+
+void getFunctionValues(char *sym_name){
+  symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
+  if(identifier == 0){
+    char message[ 100 ];
+    if (active_function == 0)
+      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
+    else
+      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+    yyerror( message );
+    exit(1);
+  }
+  num_params = identifier->length;
+  scope = identifier->inner_scope;
+  active_function = strdup(sym_name);
+}
+
 /*=========================================================================
 SEMANTIC RECORDS
 =========================================================================*/
@@ -140,7 +146,7 @@ SEMANTIC RECORDS
    char *strval; /* String values */
    char *id; /* Identifiers */
    struct lbs *lbls; /* For backpatching */
-   struct func *funcs; /* For functions */
+   int start; /* For functions */
 };
 
 /*=========================================================================
@@ -152,7 +158,7 @@ TOKENS
 %token <id> IDENTIFIER /* Simple identifier */
 %token <lbls> IF WHILE /* For backpatching labels */
 %token MAIN
-%token <funcs> DEF
+%token <start> DEF
 %token SKIP THEN ELSE FI DO END
 %token INTEGER READ WRITE LET IN
 %token EQUAL OPEN CLOSE
@@ -189,13 +195,10 @@ command : SKIP
    | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); }
    | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
 
-   | DEF IDENTIFIER { $1 = (struct func *) newfunc(); install($2, 1, 0); pushScope();
-                      gen_code( LD_INT, gen_label()+3);
-                      gen_code( STORE, context_check($2));
-                      $1->start_function = gen_label(); gen_code(GOTO, 0);}
-    '(' parameters ')' {setFunctionValues($2,num_params, getCurrentScope());position=0;}
+   | DEF IDENTIFIER { $1 = installFunction($2);}
+    '(' parameters ')' {setFunctionValues($2, getCurrentScope());}
     OPEN commands CLOSE { gen_code( RET, 0);
-               back_patch( $1->start_function, GOTO, gen_label());popScope();}
+               back_patch( $1, GOTO, gen_label());popScope();}
 
    | IDENTIFIER {getFunctionValues($1);}
     '(' values ')' { active_function=NULL;position=0;gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
@@ -242,7 +245,7 @@ parameters : /* empty */
            | parameters ',' param
 ;
 
-param : INTEGER IDENTIFIER {position++; num_params=position; install( $2, 1, position );}
+param : INTEGER IDENTIFIER {position++; install( $2, 1, position );}
 ;
 
 values : /* empty */
