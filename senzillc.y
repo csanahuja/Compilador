@@ -62,9 +62,20 @@ void setFunctionValues(char *sym_name, int num_params, int inner_scope){
 
 void getFunctionValues(char *sym_name){
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
+  if(identifier == 0){
+    char message[ 100 ];
+    if (active_function == 0)
+      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
+    else
+      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+    yyerror( message );
+    exit(1);
+  }else{
   num_params = identifier->length;
   scope = identifier->inner_scope;
   active_function = strdup(sym_name);
+}
+
 }
 
 /*-------------------------------------------------------------------------
@@ -95,7 +106,7 @@ int context_check( char *sym_name)
     else
       sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
     yyerror( message );
-    return -1;
+    exit(-1);
   }
   return identifier->offset;
 }
@@ -106,14 +117,14 @@ int context_check_param()
     char message[ 100 ];
     sprintf( message, "EXCEED ARGUMENTS => Function %s requires %i params", active_function, num_params);
     yyerror( message );
-    return -1;
+    exit(-1);
   }
   symrec *identifier = getsymArgument(position, scope);
   if (identifier == 0){
     char message[ 100 ];
     sprintf( message, "CANNOT GET PARAM => Function %s position %i", active_function, position);
     yyerror( message );
-    return -1;
+    exit(-1);
   }
   return identifier->offset;
 }
@@ -182,12 +193,12 @@ command : SKIP
                       gen_code( LD_INT, gen_label()+3);
                       gen_code( STORE, context_check($2));
                       $1->start_function = gen_label(); gen_code(GOTO, 0);}
-    '(' parameters ')' {setFunctionValues($2,num_params, getCurrentScope());}
+    '(' parameters ')' {setFunctionValues($2,num_params, getCurrentScope());position=0;}
     OPEN commands CLOSE { gen_code( RET, 0);
                back_patch( $1->start_function, GOTO, gen_label());popScope();}
 
    | IDENTIFIER {getFunctionValues($1);}
-    '(' values ')' { gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
+    '(' values ')' { active_function=NULL;position=0;gen_code(LD_VAR, context_check($1)); gen_code( CALL, 0);}
 
    | READ IDENTIFIER { gen_code( READ_INT, context_check( $2 ) ); }
    | WRITE exp { gen_code( WRITE_INT, 0 ); }
@@ -231,7 +242,7 @@ parameters : /* empty */
            | parameters ',' param
 ;
 
-param : INTEGER IDENTIFIER {num_params++; install( $2, 1, num_params );}
+param : INTEGER IDENTIFIER {position++; num_params=position; install( $2, 1, position );}
 ;
 
 values : /* empty */
@@ -264,15 +275,16 @@ int main( int argc, char *argv[] )
   yyin = fopen( argv[1], "r" );
   /*yydebug = 1;*/
   errors = 0;
-  printf("Senzill Compiler\n");
+  printf("Starting Compilation\n");
   yyparse ();
-  printf ( "Parse Completed\n" );
-  if ( errors == 0 )
-    {
+  if ( errors == 0 ){
+      printf ( "Compilation succeed\n" );
       //print_code ();
       //fetch_execute_cycle();
       write_bytecode( argv[2] );
-    }
+  } else {
+    printf ( "Compilation failed\n" );
+  }
   return 0;
 }
 

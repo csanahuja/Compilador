@@ -1,0 +1,22 @@
+/* This program checks the assignation of function arguments
+  Expected output: 1 2 3 4 5
+*/
+
+
+main ¿
+
+    def function(int a, int b, int c, int d, int e) ¿
+        write a;
+        write b;
+        write c;
+
+        def function2(int d, int e)¿
+          write d;
+          write e;
+        ?;
+
+        function2(d, e);
+    ?;
+
+    function(1,2,3,4,5);
+?
