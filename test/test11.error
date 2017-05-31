@@ -1,0 +1,9 @@
+/* This program checks if the syntax error gives the correct Line
+
+*/
+
+main ¿
+    int a;
+    a = 1
+
+?

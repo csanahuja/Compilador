@@ -1,0 +1,10 @@
+/* This program checks no variable defined in global scope
+
+*/
+
+
+main ¿
+
+    a = 5;
+
+?

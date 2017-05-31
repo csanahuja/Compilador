@@ -1,0 +1,13 @@
+/* This program checks if we can call a function defined on inner scope from
+   global
+
+*/
+
+main ¿
+
+  def scope1()¿
+    def scope2()¿?;
+  ?;
+
+  scope2();
+?

@@ -1,0 +1,10 @@
+/* This program checks if we assign number to array reference
+
+*/
+
+main ¿
+
+    def b(int[] c) ¿?;
+
+    b(5);
+?

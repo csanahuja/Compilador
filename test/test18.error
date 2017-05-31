@@ -1,0 +1,9 @@
+/* This program checks if we define a function with same name as variable
+
+*/
+
+main ¿
+    int a;
+
+    def a() ¿?;
+?

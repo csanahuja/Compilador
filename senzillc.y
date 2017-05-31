@@ -504,10 +504,10 @@ int yyerror ( char *s ) /* Called by yyparse on error */
   if (strstr(s,"NOT ENOUGH ARGUMENTS"))
     printf ("==> Starvation Exception trigger => The functions needs to be feed!\n");
   if (strstr(s,"EXCEED ARGUMENTS"))
-    printf ("==>  Indigestion Exception triggered => The functions its overbooked!\n");
+    printf ("==> Indigestion Exception triggered => The functions its overbooked!\n");
   if (strstr(s,"NOT DEFINED")){
     printf ("==> Random Generation Exception triggered => No this program is not \n");
-    printf ("==> generating random things instead define them! \n");
+    printf ("==> generating random things. Instead define them! \n");
   }
   if (strstr(s,"ALREADY DEFINED"))
     printf ("==> Deja Vu Exception triggered => That have been defined before!  \n");

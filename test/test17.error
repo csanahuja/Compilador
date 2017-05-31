@@ -1,0 +1,7 @@
+/* This program checks if syntax error when omiting closing tag
+
+*/
+
+main ¿
+    int a;
+    a = 1;

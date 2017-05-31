@@ -1,0 +1,10 @@
+/* This program checks the include fails when no file
+
+*/
+
+
+main ¿
+
+    import test/test2_4.imp
+
+?

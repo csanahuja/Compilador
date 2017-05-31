@@ -1,0 +1,19 @@
+/* This program checks no variable defined in function scope
+
+*/
+
+
+main ¿
+
+    def scope1()¿
+      int a;
+    ?;
+
+    def scope2()¿
+      write a;
+    ?;
+
+    scope1();
+    scope2();
+
+?
