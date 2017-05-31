@@ -21,6 +21,7 @@ int yyerror(char *);
 int yylex();
 
 int errors; /* Error Count */
+extern int num_lines;
 
 /* Functions variables */
 int num_params = 0;
@@ -28,7 +29,7 @@ int position = 0;
 int scope;
 char* active_function = NULL;
 
-
+/* Function to initialize data structures used */
 void init(){
   initScopeStack();
   initBPStack();
@@ -68,6 +69,7 @@ void install ( char *sym_name, int length, int position, Type type)
 If identifier is defined, generate code
 -------------------------------------------------------------------------*/
 
+/* Function to get a variable starting from the current scope */
 symrec * getVar(char* sym_name){
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   if (identifier == 0){
@@ -82,6 +84,11 @@ symrec * getVar(char* sym_name){
   return identifier;
 }
 
+/* Function to get variable on a given scope, note that the function calls the
+   same function as getVar which internally searches in the lower scope and if
+   the variable is not found it searches onto higher scope and so on.
+   However we call this function on a point of execution where the scopes are
+   not anyymore on the stack o it is only intended to get a variable on a scope*/
 symrec * getVarOnScope(char* sym_name, int scope){
   symrec *identifier = getsym( sym_name, scope, 0 );
   if (identifier == 0){
@@ -96,12 +103,16 @@ symrec * getVarOnScope(char* sym_name, int scope){
   return identifier;
 }
 
+/* This function gives the offset of a variable */
 int context_check( char *sym_name)
 {
   symrec *identifier = getVar(sym_name);
   return identifier->offset;
 }
 
+/* This function returns a variable in the active scope and active position.
+   Function used to get the diferent arguments of a function
+*/
 symrec * context_check_param()
 {
   if (position > num_params){
@@ -164,9 +175,9 @@ void loadFunctionValues(char *sym_name){
   if(identifier == 0){
     char message[ 100 ];
     if (active_function == 0)
-      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
+      sprintf( message, "*** NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
     else
-      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+      sprintf( message, "*** NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
     yyerror( message );
     exit(1);
   }
@@ -179,7 +190,7 @@ void loadFunctionValues(char *sym_name){
 void unloadFunctionValues(){
   if (position < num_params){
     char message[ 100 ];
-    sprintf( message, "NOT ENOUGH ARGUMENTS => Function: %s requires %i arguments", active_function, num_params);
+    sprintf( message, "*** NOT ENOUGH ARGUMENTS => Function: %s requires %i arguments", active_function, num_params);
     yyerror( message );
     exit(-1);
   }
@@ -195,6 +206,10 @@ void callFunction(char *sym_name){
   gen_code( CALL, 0);
 }
 
+/* Function to create a variable on the symbol table without assigning any
+   offset nor calling data_location(). Intended to later be a reference to an
+   already existing var
+*/
 void installReference( char *sym_name, int position, Type type)
 {
   symrec *s = getsymOnCurrentScope (sym_name);
@@ -202,23 +217,31 @@ void installReference( char *sym_name, int position, Type type)
     s = create_reference (sym_name, position, type);
   }else {
     char message[ 100 ];
-    sprintf( message, "ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
+    sprintf( message, "*** ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
     yyerror( message );
   }
 }
 
+/* Function to assign int to a variable passed by parameter
+*/
 void loadInt(){
   symrec * var = context_check_param();
   if (var->type == INT)
     gen_code( STORE, var->offset);
   if (var->type == ARRAY){
     char message[ 100 ];
-    sprintf( message, "EXPECTED ARRAY FOUND INT => Argument number: %i", position);
+    sprintf( message, "*** EXPECTED ARRAY FOUND INT => Argument number: %i", position);
     yyerror( message );
     exit(-1);
   }
 }
 
+/* Function to load variable if type of argument is INT we do the same as in
+   the function loadInt. If the argument is an array we push a Reference to the
+   Stack Reference.
+   This function is intended to be able to assign to an array either an array
+   or variable (consider a variable as array of 1 position)
+*/
 void loadVariable(char *sym_name){
   symrec * var = context_check_param();
   if (var->type == INT){
@@ -236,6 +259,12 @@ void loadVariable(char *sym_name){
   }
 }
 
+/* We push a backpatch label. We only do that for to operations. STORE_SUBS and
+  LD_SUBS. This is because when we call context_check of an array inside a function
+  that we pass by parameter we dont have the correct offset untill later and
+  we have to do a backpatch once we have it correctly.
+  Note all arrays passed by parameter get offset 0 at start
+*/
 void addBP(char *sym_name, int code){
   bp_struct* bp = malloc(sizeof(bp_struct));
   bp->name = strdup(sym_name);
@@ -245,6 +274,11 @@ void addBP(char *sym_name, int code){
   pushBP(bp);
 }
 
+/* Once we end the program we are ready to redefine the offsets and lengths of
+   arrays references. These are the arrays passed by parameter which refer to
+   other arrays with some values. We copy from original to source the offset so
+   they become a pointer to the same var
+*/
 void setReferences(){
   r_struct* rf = malloc(sizeof(r_struct));
   int i;
@@ -257,6 +291,9 @@ void setReferences(){
   }
 }
 
+/* Once we set the correct offset to the array references we are ready to do
+  all backpatches to the STORE_SUBS and LD_SUBS so we have correct instructions
+*/
 void makeBackpatch(){
   bp_struct* bp = malloc(sizeof(bp_struct));
   int i;
@@ -270,6 +307,7 @@ void makeBackpatch(){
   }
 }
 
+/* Function to make references work! */
 void enableReferences(){
   setReferences();
   makeBackpatch();
@@ -431,15 +469,18 @@ int main( int argc, char *argv[] )
   yyin = fopen( argv[1], "r" );
   /*yydebug = 1;*/
   errors = 0;
-  printf("Starting Compilation\n");
+  printf("*** STARTING COMPILATION\n");
   yyparse ();
   if ( errors == 0 ){
-      printf ( "Compilation succeed\n" );
+      printf ( "COMPILATION SUCCEED\n" );
+      printf ( "==> Gimeno Exception triggered => Compilation is not enough!\n");
+      printf ( "==> Refactor immediately the code! \n");
       //print_code ();
       //fetch_execute_cycle();
       write_bytecode( argv[2] );
   } else {
-    printf ( "Compilation failed\n" );
+    printf ( "*** COMPILATION FAILED!\n" );
+    printf ( "==> StackOverFlow Exception triggered => Visit it! \n");
   }
   return 0;
 }
@@ -450,7 +491,9 @@ YYERROR
 int yyerror ( char *s ) /* Called by yyparse on error */
 {
   errors++;
-  printf ("%s\n", s);
+  printf ("*** SYNTAX ERROR: Line => %i\n", num_lines-1);
+  printf ("==> Python Exception triggered => Remember semicolons at the end!\n");
+  printf ("==> (Default msg, not necessary missing semicolons) \n");
   return 0;
 }
 /**************************** End Grammar File ***************************/
