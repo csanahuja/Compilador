@@ -14,10 +14,10 @@ VM : SM.c VM.c CG.c
 	$(CC) $(CFLAGS) CG.c SM.c VM.c -o VM -lm
 
 $(TARGET) : $(TARGET).tab.c lex.yy.c SM.c CG.c ST.c
-	$(CC) $(CFLAGS) $(TARGET).tab.c lex.yy.c SM.c CG.c ST.c -lm -o $(TARGET) 
+	$(CC) $(CFLAGS) $(TARGET).tab.c lex.yy.c SM.c CG.c ST.c -lm -o $(TARGET)
 
 $(TARGET).tab.h $(TARGET).tab.c : $(TARGET).y
-	bison -dv $(TARGET).y 
+	bison -dv $(TARGET).y
 
 lex.yy.c : $(TARGET).l
 	flex $(TARGET).l

@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------
 SYMBOL TABLE RECORD
 -------------------------------------------------------------------------*/
+typedef enum {INT, ARRAY, FUNCTION} Type;
 
 struct symrec
 {
@@ -11,14 +12,18 @@ struct symrec
   /*FUNCTION PARAMS*/
   int position; /* Position of param in function */
   int inner_scope; /*Scope inside this function*/
+  /*TYPE*/
+  Type type;
   struct symrec *next; /* link field */
 };
 typedef struct symrec symrec;
 
+
 symrec * getsymOnCurrentScope (char *sym_name);
 symrec * getsymArgument (int position, int scope);
 symrec * getsym (char *sym_name, int scope, int previous_level);
-symrec * putsym (char *sym_name, int length, int position);
+symrec * putsym (char *sym_name, int length, int position, Type type);
+symrec * create_reference (char *sym_name, int position, Type type);
 
 
 /*-------------------------------------------------------------------------

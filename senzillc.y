@@ -46,11 +46,11 @@ struct lbs * newlblrec() /* Allocate space for the labels */
 /*-------------------------------------------------------------------------
 Install identifier & check if previously defined.
 -------------------------------------------------------------------------*/
-void install ( char *sym_name, int length, int position)
+void install ( char *sym_name, int length, int position, Type type)
 {
   symrec *s = getsymOnCurrentScope (sym_name);
   if (s == 0){
-    s = putsym (sym_name, length, position);
+    s = putsym (sym_name, length, position, type);
   }else {
     char message[ 100 ];
     sprintf( message, "ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
@@ -103,7 +103,7 @@ FUNCTIONS RELATED METHODS
 */
 int installFunction(char * sym_name){
   int start_function;
-  install(sym_name, 1, 0);
+  install(sym_name, 1, 0, FUNCTION);
   pushScope();
   gen_code( LD_INT, gen_label()+3);
   gen_code( STORE, context_check(sym_name));
@@ -168,6 +168,18 @@ void callFunction(char *sym_name){
   unloadFunctionValues();
   gen_code(LD_VAR, context_check(sym_name));
   gen_code( CALL, 0);
+}
+
+void installReference( char *sym_name, int position, Type type)
+{
+  symrec *s = getsymOnCurrentScope (sym_name);
+  if (s == 0){
+    s = create_reference (sym_name, position, type);
+  }else {
+    char message[ 100 ];
+    sprintf( message, "ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
+    yyerror( message );
+  }
 }
 
 
@@ -251,10 +263,10 @@ command : SKIP
    back_patch( $1->for_jmp_false, JMP_FALSE, gen_label() ); }
 ;
 
-id_seq_int : IDENTIFIER { install( $1, 1, 0 );}
-    | IDENTIFIER '[' NUMBER ']' { install( $1, $3, 0); }
-    | id_seq_int ',' IDENTIFIER  { install( $3, 1, 0 );}
-    | id_seq_int ',' IDENTIFIER '[' NUMBER ']' { install( $3, $5, 0); }
+id_seq_int : IDENTIFIER { install( $1, 1, 0, INT );}
+    | IDENTIFIER '[' NUMBER ']' { install( $1, $3, 0, ARRAY); }
+    | id_seq_int ',' IDENTIFIER  { install( $3, 1, 0, INT );}
+    | id_seq_int ',' IDENTIFIER '[' NUMBER ']' { install( $3, $5, 0, ARRAY); }
 ;
 
 
@@ -280,7 +292,8 @@ parameters : /* empty */
            | parameters ',' param
 ;
 
-param : INTEGER IDENTIFIER {position++; install( $2, 1, position );}
+param : INTEGER IDENTIFIER {position++; install( $2, 1, position, INT);}
+      | INTEGER '[' ']' IDENTIFIER {position++; installReference($4, position, ARRAY);}
 ;
 
 values : /* empty */
