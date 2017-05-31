@@ -31,8 +31,8 @@ clean:
 	rm -f $(TARGET) VM dissas assembler $(TARGET).tab.c $(TARGET).tab.h lex.yy.c $(TARGET).output *.o *~ *.vm
 
 
-TESTS = $(wildcard *.sz)
-ERRORS = $(wildcard *.error)
+TESTS = $(wildcard test/*.sz)
+ERRORS = $(wildcard test/*.error)
 
 test: $(TARGET)
 	@echo "#### Begin Test" $(TARGET)
