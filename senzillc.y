@@ -175,9 +175,9 @@ void loadFunctionValues(char *sym_name){
   if(identifier == 0){
     char message[ 100 ];
     if (active_function == 0)
-      sprintf( message, "*** NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
+      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
     else
-      sprintf( message, "*** NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
     yyerror( message );
     exit(1);
   }
@@ -190,7 +190,7 @@ void loadFunctionValues(char *sym_name){
 void unloadFunctionValues(){
   if (position < num_params){
     char message[ 100 ];
-    sprintf( message, "*** NOT ENOUGH ARGUMENTS => Function: %s requires %i arguments", active_function, num_params);
+    sprintf( message, "NOT ENOUGH ARGUMENTS => Function: %s requires %i arguments", active_function, num_params);
     yyerror( message );
     exit(-1);
   }
@@ -217,7 +217,7 @@ void installReference( char *sym_name, int position, Type type)
     s = create_reference (sym_name, position, type);
   }else {
     char message[ 100 ];
-    sprintf( message, "*** ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
+    sprintf( message, "ALREADY DEFINED => Variable: %s in the current Scope", sym_name);
     yyerror( message );
   }
 }
@@ -230,7 +230,7 @@ void loadInt(){
     gen_code( STORE, var->offset);
   if (var->type == ARRAY){
     char message[ 100 ];
-    sprintf( message, "*** EXPECTED ARRAY FOUND INT => Argument number: %i", position);
+    sprintf( message, "EXPECTED ARRAY FOUND INT => Argument number: %i", position);
     yyerror( message );
     exit(-1);
   }
@@ -472,7 +472,7 @@ int main( int argc, char *argv[] )
   printf("*** STARTING COMPILATION\n");
   yyparse ();
   if ( errors == 0 ){
-      printf ( "COMPILATION SUCCEED\n" );
+      printf ( "*** COMPILATION SUCCEED\n" );
       printf ( "==> Gimeno Exception triggered => Compilation is not enough!\n");
       printf ( "==> Refactor immediately the code! \n");
       //print_code ();
@@ -481,6 +481,7 @@ int main( int argc, char *argv[] )
   } else {
     printf ( "*** COMPILATION FAILED!\n" );
     printf ( "==> StackOverFlow Exception triggered => Visit it! \n");
+    printf ( "==> Or give yourself a break! \n");
   }
   return 0;
 }
@@ -491,9 +492,19 @@ YYERROR
 int yyerror ( char *s ) /* Called by yyparse on error */
 {
   errors++;
-  printf ("*** SYNTAX ERROR: Line => %i\n", num_lines-1);
-  printf ("==> Python Exception triggered => Remember semicolons at the end!\n");
-  printf ("==> (Default msg, not necessary missing semicolons) \n");
+  printf ("*** %s >>> AT LINE %i\n", s, num_lines);
+  if (strstr(s,"NOT ENOUGH ARGUMENTS"))
+    printf ("==> Starvation Exception trigger => The functions needs to be feed!\n");
+  if (strstr(s,"EXCEED ARGUMENTS"))
+    printf ("==>  Indigestion Exception triggered => The functions its overbooked!\n");
+  if (strstr(s,"NOT DEFINED")){
+    printf ("==> Random Generation Exception triggered => No this program is not \n");
+    printf ("==> generating random things instead define them! \n");
+  }
+  if (strstr(s,"ALREADY DEFINED"))
+    printf ("==> Deja Vu Exception triggered => That have been defined before!  \n");
+  if (strstr(s,"EXPECTED ARRAY FOUND INT"))
+    printf ("==> T.Alzinet Exception triggered => El casament de paràmetres!  \n");
   return 0;
 }
 /**************************** End Grammar File ***************************/

@@ -1,13 +1,30 @@
-/* This program checks if the compilation fails when
-   not enough arguments passed by parameter
+/* This program checks pass of arrays by reference to functions
+
+  Expected output: 10 10
 */
+
 main ¿
 
-    def function(int a, int b, int c) ¿
-        write a;
-        write b;
-        write c;
+    int a0;
+    int a1;
+    int b[2];
+
+    a0 = 9;
+    a1 = 8;
+    b[0] = 1;
+    b[1] = 2;
+
+    def function(int c1, int c2, int[] d) ¿
+        d[0] = d[0] + c1;
+
+        def function2(int e, int[] f)¿
+          f[1] = f[1] + e;
+        ?;
+
+        function2(c2, d);
     ?;
 
-    function(1,2);
+    function(a0,a1,b);
+    write b[0];
+    write b[1];
 ?

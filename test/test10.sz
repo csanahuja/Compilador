@@ -1,0 +1,33 @@
+/* This program checks inner functions scopes and array references
+
+   Expected Output: 1
+*/
+
+main ¿
+
+  int arrayReference[5];
+  arrayReference[0] = 0;
+
+  def scope1(int[] a)¿
+    a[0] = a[0] + 1;
+    def scope2(int[] b)¿
+      b[0] = b[0] + 1;
+      def scope3(int[] c)¿
+        c[0] = c[0] + 1;
+        def scope4(int[] d)¿
+          d[0] = d[0] + 1;
+          def scope5(int[] e)¿
+            e[0] = e[0] +1;
+          ?;
+          scope5(d);
+        ?;
+        scope4(c);
+      ?;
+      scope3(b);
+    ?;
+    scope2(a);
+  ?;
+
+  scope1(arrayReference);
+  write arrayReference[0];
+?

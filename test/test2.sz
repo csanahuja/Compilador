@@ -1,5 +1,6 @@
 /* This program checks the includes
 
+   Expected output: 100 200 300
 */
 
 

@@ -1,21 +1,21 @@
-/* This program checks the arrays
+/* This program checks the functions without parameters
 
-   Expected output: 0, 1, 2, 3, 4
+   Expected output: 5 10 15
 */
 
 
 main ¿
-
-    int a[5];
-    a[0] = 0;
-    a[1] = 1;
-    a[2] = 2;
-    a[3] = a[1] + a[2];
-    a[4] = 4;
-
-    write a[0];
-    write a[1];
-    write a[2];
-    write a[1+2];
-    write a[4];
+    int a;
+    a = 5;
+    def function() ¿
+        a = 10;
+    ?;
+    def function2() ¿
+        a = 15;
+    ?;
+    write a;
+    function();
+    write a;
+    function2();
+    write a;
 ?

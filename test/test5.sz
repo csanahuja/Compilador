@@ -1,20 +1,25 @@
-/* This program checks the functions without
-   parameters
+/* This program checks the functions scopes
+
+   Expected output: 3 2 1
 */
 
 
 main ¿
     int a;
-    a = 5;
-    def function() ¿ 
-        a = 10;
+    a = 1;
+
+    def function(int b) ¿
+        b = b + 1;
+
+        def function2(int c) ¿
+          c = c + 1;
+          write c;
+        ?;
+
+        function2(b);
+        write b;
     ?;
-    def function2() ¿
-        a = 15;
-    ?;
-    write a;
-    function();
-    write a;
-    function2();
+
+    function(a);
     write a;
 ?

@@ -1,6 +1,6 @@
-/* This program checks the functions scopes and functions
-   with parameters
-   Expected output: 1 2 3 4 5
+/* This program checks the functions with parameters
+
+   Expected output: 5
 */
 
 
@@ -8,25 +8,9 @@ main ¿
     int a;
     a = 5;
 
-    def function() ¿
-        int a;
-        a = 2;
-        def function2()¿
-          int a;
-          a = 1;
-          write a;
-        ?;
-
-        function2();
-        write a;
+    def function(int b) ¿
+        write b;
     ?;
 
-    def function2(int a, int a2) ¿
-        write a;
-        write a2;
-    ?;
-
-    function();
-    function2(3, 4);
-    write a;
+    function(a);
 ?
