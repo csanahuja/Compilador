@@ -74,10 +74,12 @@ symrec * getVar(char* sym_name){
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   if (identifier == 0){
     char message[ 100 ];
-    if (active_function == 0)
+
+    char *name = getScopeName(getCurrentScope());
+    if (name == 0)
       sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
     else
-      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, name);
     yyerror( message );
     exit(-1);
   }
@@ -188,19 +190,25 @@ void loadFunctionValues(char *sym_name){
 
 /* Function to unload the values of the active function */
 void unloadFunctionValues(){
+
+  active_function=NULL;
+  position=0;
+  num_params=0;
+}
+
+/* Checks if enough arguments */
+void checkArguments(){
   if (position < num_params){
     char message[ 100 ];
     sprintf( message, "NOT ENOUGH ARGUMENTS => Function: %s requires %i arguments", active_function, num_params);
     yyerror( message );
     exit(-1);
   }
-  active_function=NULL;
-  position=0;
-  num_params=0;
 }
 
 /* Function to call a function*/
 void callFunction(char *sym_name){
+  checkArguments();
   unloadFunctionValues();
   gen_code(LD_VAR, context_check(sym_name));
   gen_code( CALL, 0);

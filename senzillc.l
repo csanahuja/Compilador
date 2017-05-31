@@ -44,14 +44,14 @@ import                      BEGIN(incl);
 <incl>[ \t]*                /* eat the whitespaces */
 <incl>[^ \t\n]+             { /* got the include file name */
                             if ( include_stack_ptr >= MAX_INCLUDE_DEPTH ){
-                                fprintf( stderr, "Includes nested too deeply \n" );
+                                fprintf( stderr, "*** Includes nested too deeply \n" );
                                 exit( 1 );
                             }
                             include_stack[include_stack_ptr++] =
                             YY_CURRENT_BUFFER;
                             yyin = fopen( yytext, "r" );
                             if ( ! yyin ){
-                                printf("Import file: \"%s\" not found\n", yytext);
+                                printf("*** Filesystem Exception triggered => Import file: \"%s\" not found\n", yytext);
                                 exit(1);
                                 }
                             }

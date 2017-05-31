@@ -23,6 +23,7 @@ symrec * getsymArgument (int position, int scope);
 symrec * getsym (char *sym_name, int scope, int previous_level);
 symrec * putsym (char *sym_name, int length, int position, Type type);
 symrec * create_reference (char *sym_name, int position, Type type);
+char * getScopeName(int scope);
 
 
 /*-------------------------------------------------------------------------

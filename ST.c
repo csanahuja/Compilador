@@ -104,6 +104,17 @@ symrec * getsymArgument (int position, int scope)
   return NULL;
 }
 
+char * getScopeName(int scope){
+  symrec *ptr;
+  for ( ptr = sym_table;
+  ptr != (symrec *) 0;
+  ptr = (symrec *)ptr->next )
+    if (ptr->type == FUNCTION)
+      if(ptr->inner_scope == scope)
+        return ptr->name;
+  return NULL;
+}
+
 /************************** End Symbol Table **************************/
 
 /*========================================================================
