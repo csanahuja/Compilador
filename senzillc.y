@@ -29,6 +29,12 @@ int scope;
 char* active_function = NULL;
 
 
+void init(){
+  initScopeStack();
+  initBPStack();
+  initReferenceStack();
+}
+
 /*-------------------------------------------------------------------------
 The following support backpatching
 -------------------------------------------------------------------------*/
@@ -61,8 +67,8 @@ void install ( char *sym_name, int length, int position, Type type)
 /*-------------------------------------------------------------------------
 If identifier is defined, generate code
 -------------------------------------------------------------------------*/
-int context_check( char *sym_name)
-{
+
+symrec * getVar(char* sym_name){
   symrec *identifier = getsym( sym_name, getCurrentScope(), 0 );
   if (identifier == 0){
     char message[ 100 ];
@@ -73,10 +79,30 @@ int context_check( char *sym_name)
     yyerror( message );
     exit(-1);
   }
+  return identifier;
+}
+
+symrec * getVarOnScope(char* sym_name, int scope){
+  symrec *identifier = getsym( sym_name, scope, 0 );
+  if (identifier == 0){
+    char message[ 100 ];
+    if (active_function == 0)
+      sprintf( message, "NOT DEFINED => Variable: %s in the GLOBAL Scope", sym_name);
+    else
+      sprintf( message, "NOT DEFINED => Variable: %s in the %s Scope", sym_name, active_function);
+    yyerror( message );
+    exit(-1);
+  }
+  return identifier;
+}
+
+int context_check( char *sym_name)
+{
+  symrec *identifier = getVar(sym_name);
   return identifier->offset;
 }
 
-int context_check_param()
+symrec * context_check_param()
 {
   if (position > num_params){
     char message[ 100 ];
@@ -91,9 +117,8 @@ int context_check_param()
     yyerror( message );
     exit(-1);
   }
-  return identifier->offset;
+  return identifier;
 }
-
 /*-------------------------------------------------------------------------
 FUNCTIONS RELATED METHODS
 -------------------------------------------------------------------------*/
@@ -182,6 +207,73 @@ void installReference( char *sym_name, int position, Type type)
   }
 }
 
+void loadInt(){
+  symrec * var = context_check_param();
+  if (var->type == INT)
+    gen_code( STORE, var->offset);
+  if (var->type == ARRAY){
+    char message[ 100 ];
+    sprintf( message, "EXPECTED ARRAY FOUND INT => Argument number: %i", position);
+    yyerror( message );
+    exit(-1);
+  }
+}
+
+void loadVariable(char *sym_name){
+  symrec * var = context_check_param();
+  if (var->type == INT){
+    gen_code( LD_VAR, context_check( sym_name ));
+    gen_code( STORE, var->offset);
+  }
+  if (var->type == ARRAY){
+    symrec *argument = getVar(sym_name);
+    r_struct* rf = malloc(sizeof(r_struct));
+    rf->origin_scope = argument->scope;
+    rf->origin_var = argument->name;
+    rf->source_var = var->name;
+    rf->source_scope = var->scope;
+    pushReference(rf);
+  }
+}
+
+void addBP(char *sym_name, int code){
+  bp_struct* bp = malloc(sizeof(bp_struct));
+  bp->name = strdup(sym_name);
+  bp->operation = code;
+  bp->label = gen_label();
+  bp->scope = getCurrentScope();
+  pushBP(bp);
+}
+
+void setReferences(){
+  r_struct* rf = malloc(sizeof(r_struct));
+  int i;
+  for(i = getReferencesSize(); i > 0; i--){
+    rf = popReference();
+    symrec *origin = getVarOnScope(rf->origin_var,rf->origin_scope);
+    symrec *source = getVarOnScope(rf->source_var,rf->source_scope);
+    source->offset = origin->offset;
+    source->length = origin->length;
+  }
+}
+
+void makeBackpatch(){
+  bp_struct* bp = malloc(sizeof(bp_struct));
+  int i;
+  for (i = getBPSize(); i > 0;i--){
+    bp = popBP();
+    symrec *var = getVarOnScope(bp->name,bp->scope);
+    if (bp->operation == 0)
+      back_patch( bp->label, STORE_SUBS, var->offset);
+    if (bp->operation == 1)
+      back_patch( bp->label, LD_SUBS, var->offset);
+  }
+}
+
+void enableReferences(){
+  setReferences();
+  makeBackpatch();
+}
 
 /*=========================================================================
 SEMANTIC RECORDS
@@ -225,8 +317,9 @@ GRAMMAR RULES for the Simple language
 %%
 
 program : /* empty */
-        | MAIN OPEN { gen_code( DATA, data_location()-1); initScopeStack();} commands
-          CLOSE { back_patch( 0, DATA, data_location()-1) ; gen_code( HALT, 0 ); YYACCEPT; }
+        | MAIN OPEN { gen_code( DATA, data_location()-1); init();} commands
+          CLOSE { back_patch( 0, DATA, data_location()-1) ; gen_code( HALT, 0 );
+                  enableReferences(); YYACCEPT; }
 ;
 
 /*=========================================================================
@@ -241,7 +334,7 @@ command : SKIP
    | INTEGER id_seq_int
 
    | IDENTIFIER '=' exp { gen_code( STORE, context_check($1)); }
-   | IDENTIFIER '[' exp ']' '=' exp { gen_code( STORE_SUBS, context_check($1)); }
+   | IDENTIFIER '[' exp ']' '=' exp { addBP($1, 0);gen_code( STORE_SUBS, context_check($1));}
 
    | DEF IDENTIFIER { $1 = installFunction($2);}
     '(' parameters ')' {saveFunctionValues($2, getCurrentScope());}
@@ -277,8 +370,8 @@ bool_exp : exp '<' exp { gen_code( LT, 0 ); }
 ;
 
 exp : NUMBER { gen_code( LD_INT, $1 ); }
-   | IDENTIFIER { gen_code( LD_VAR, context_check( $1 ) ); }
-   | IDENTIFIER '[' exp ']' { gen_code(LD_SUBS, context_check( $1 )); }
+   | IDENTIFIER { gen_code( LD_VAR, context_check( $1 ) );}
+   | IDENTIFIER '[' exp ']' { addBP($1, 1); gen_code(LD_SUBS, context_check( $1 )); }
    | exp '+' exp { gen_code( ADD, 0 ); }
    | exp '-' exp { gen_code( SUB, 0 ); }
    | exp '*' exp { gen_code( MULT, 0 ); }
@@ -300,8 +393,20 @@ values : /* empty */
        | value
        | values ',' value
 
-value: exp { position++; gen_code( STORE, context_check_param()); }
+value: exp_args { position++; loadInt(); }
+     | IDENTIFIER { position++; loadVariable($1);}
 ;
+
+exp_args : NUMBER { gen_code( LD_INT, $1 ); }
+   | IDENTIFIER '[' exp_args ']' { gen_code(LD_SUBS, context_check( $1 )); }
+   | exp_args '+' exp_args { gen_code( ADD, 0 ); }
+   | exp_args '-' exp_args { gen_code( SUB, 0 ); }
+   | exp_args '*' exp_args { gen_code( MULT, 0 ); }
+   | exp_args '/' exp_args { gen_code( DIV, 0 ); }
+   | exp_args '^' exp_args { gen_code( PWR, 0 ); }
+   | '(' exp_args ')'
+;
+
 
 /*=========================================================================
 FUNCTIONS

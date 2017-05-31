@@ -18,7 +18,6 @@ struct symrec
 };
 typedef struct symrec symrec;
 
-
 symrec * getsymOnCurrentScope (char *sym_name);
 symrec * getsymArgument (int position, int scope);
 symrec * getsym (char *sym_name, int scope, int previous_level);
@@ -44,3 +43,55 @@ int getCurrentScope();
 int getPreviousScope(int previous_level);
 void pushScope();
 void popScope();
+
+
+/*-------------------------------------------------------------------------
+REFERENCES OF ARRAYS
+-------------------------------------------------------------------------*/
+
+#define STACK_REFERENCES_MAX 100
+
+struct reference_struct {
+    char*    origin_var;
+    int      origin_scope;
+    char*    source_var;
+    int      source_scope;
+};
+typedef struct reference_struct r_struct;
+
+struct reference_stack {
+    r_struct * data[STACK_REFERENCES_MAX];
+    int size;
+};
+typedef struct reference_stack r_stack;
+
+void initReferenceStack();
+void pushReference(r_struct * r_struck);
+r_struct * popReference();
+int getReferencesSize();
+
+
+/*-------------------------------------------------------------------------
+STACK TO STORE BACKPATCH OFFSETS (Backpatch = bp)
+-------------------------------------------------------------------------*/
+
+#define STACK_BP_MAX 100
+
+struct bp_struct {
+    char*    name;        // VAR
+    int      operation;  // STORE_SUBS = 0 LD_SUBS = 1
+    int      label;
+    int      scope;
+};
+typedef struct bp_struct bp_struct;
+
+struct bp_stack {
+    bp_struct * data[STACK_BP_MAX];
+    int size;
+};
+typedef struct bp_stack bp_stack;
+
+void initBPStack();
+void pushBP(bp_struct * bp_struck);
+bp_struct * popBP();
+int getBPSize();
