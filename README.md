@@ -114,6 +114,29 @@ func(a);
 write a[3];
 ```
 
+##### Primera aproximació
 Per dur a terme el pas per referència en primer lloc simplement s'havia pensat en crear una variable a la taula de symbols sense asignar-li cap offset ni fet cap `data_location()`. Així el que tindriem és una altra etiqueta i en cridar la funció assignar els atributs de la variable que passem per paràmetre a la variable de la funció és a dir l'offset. Per realitzar això s'ha hagut de modificar les expressions dels paràmetres que introduïm en una funció. Prèviament es podien assignar expressions però ara era convienent diferenciar entre variables i números.
 
 Aquesta diferenciació es deguda a que inicialment la variable de tipus array que tenim en la funció no és una variable a la la pila de la VM, només està a la taula de símbols així doncs no li podem assignar un número sino que li hem d'assignar una posició de memòria d'alguna altra variable (la que referenciarà). És per això que es permet assignar a un array tant variables (considerades arrays de longitud 1) com arrays. De fet si volem que una funció ens modifiqui el valor de una variable el que podem fer es declarar una funció amb un paràmetre de tipus array i passar per valor la variable que volem modificar.
+
+Aquesta aproximació tenia un inconvenient. Quan operavem amb els arrays passats per paràmetre dintre de la funció en fer un `context_check()` el valor del offset que retornava era 0 donat que l'actualització no es feia fins després
+##### Segona aproximació
+Per tal de solucionar aixó s'ha creat una pila on guardem totes les instruccions que operen amb arrays `LD_SUBS` i `STORE_SUBS` i en acabar el programa desempilem totes les instruccions i fem un backpatch amb el nou `context_check()` dels arrays que ara s'actualitzat.
+
+Això però només funciona bé amb les funcions que els hi passem un array per referència des del main. No obstant, quan es declarava una funció dintre d'una altra funció i des del main passavem per referència a una funció i aquesta a la funció interior com en el següent exemple veuriem com en fer `write b[0]` que ens hauria de printar el resultat de l'adreça del array global `c[0]` ens printaria el resultat de la variable `a`
+```
+int a, b, c[5];
+a = 2;
+c[0] = 5;
+def func(int[] a)¿
+    def func2(int[] b)¿
+        write b[0];
+    ?;
+    func2(a);
+?;
+func(C);
+```
+Fet produit perquè la modificació de les variables referència es feia des dels scopes més interiors fins als exteriors, és a dir estariem copian al array `b` l'adreça del array `a` abans d'haver copiat al array `a` l'adreça del array `c`.
+
+##### Tercera i definitiva aproximació
+Aleshores ha sigut necessari crear una altra pila per les variables referència que hem de substituir per altres. Un cop arribem al punt on hem de fer la substitució el que fem es apilar aquesta substitució fins que s'acaba el programa. Així un cop acabat el programa podem fer primer les substitucions més exteriors simplement desapilant la pila tenim en compte que primer hem apilat les més interiors. Un cop acabat el programa el que fem és crear correctament totes les variables referència i després processedir a fer tots els backpatches de les instruccions relacionades ambs els arrays com hem comentat.
