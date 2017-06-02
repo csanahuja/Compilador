@@ -103,7 +103,7 @@ int a; a = 1; func(a);
 # Pas d'un int directament
 func(1);
 ```
-En canvi quan passem un array per paràmetre el que fem és crear una altra etiqueta, noteu com en el següent exemple en modificar l'array dintre de la funció aquest també canviarà fora. Així doncs quan printem 'a[3]' que prèviament hem assignat a '3' veurem com en fer un 'write' obtindrem com a resultat '4' donat que tot i que la funció ha modificat l'array 'i' aquesta etiqueta és un apuntador que apunta a la mateixa adreça que l'etiqueta 'a'
+En canvi quan passem un array per paràmetre el que fem és crear una altra etiqueta, noteu com en el següent exemple en modificar l'array dintre de la funció aquest també canviarà fora. Així doncs quan printem `a[3]` que prèviament hem assignat a `3` veurem com en fer un `write` obtindrem com a resultat `4` donat que tot i que la funció ha modificat l'array `i` aquesta etiqueta és un apuntador que apunta a la mateixa adreça que l'etiqueta `a`
 ```
 # Pas per referència
 def func(int[] i)¿
@@ -115,15 +115,15 @@ write a[3];
 ```
 
 ##### Primera aproximació
-Per dur a terme el pas per referència en primer lloc simplement s'havia pensat en crear una variable a la taula de símbols sense assignar-li cap offset ni fet cap 'data_location()'. Així el que tindríem és una altra etiqueta i en cridar la funció assignar els atributs de la variable que passem per paràmetre a la variable de la funció és a dir l'offset. Per realitzar això s'ha hagut de modificar les expressions dels paràmetres que introduïm en una funció. Prèviament es podien assignar expressions però ara era precís diferenciar entre variables i números.
+Per dur a terme el pas per referència en primer lloc simplement s'havia pensat en crear una variable a la taula de símbols sense assignar-li cap offset ni fet cap `data_location()`. Així el que tindríem és una altra etiqueta i en cridar la funció assignar els atributs de la variable que passem per paràmetre a la variable de la funció és a dir l'offset. Per realitzar això s'ha hagut de modificar les expressions dels paràmetres que introduïm en una funció. Prèviament es podien assignar expressions però ara era precís diferenciar entre variables i números.
 
 Aquesta diferenciació és deguda al fet que inicialment la variable de tipus array que tenim en la funció no és una variable a la pila de la VM, només està a la taula de símbols així doncs no li podem assignar un número si no que li hem d'assignar una posició de memòria d'alguna altra variable (la que referenciarà). És per això que es permet assignar a un array tan variables (considerades arrays de longitud 1) com arrays. De fet si volem que una funció ens modifiqui el valor d'una variable el que podem fer és declarar una funció amb un paràmetre de tipus array i passar per valor la variable que volem modificar.
 
-Aquesta aproximació tenia un inconvenient. Quan operàvem amb els arrays passats per paràmetre dintre de la funció en fer un 'context_check()' el valor del offset que retornava era 0 donat que l'actualització no es feia fins després
+Aquesta aproximació tenia un inconvenient. Quan operàvem amb els arrays passats per paràmetre dintre de la funció en fer un `context_check()` el valor del offset que retornava era 0 donat que l'actualització no es feia fins després
 ##### Segona aproximació
-Per tal de solucionar aixó s'ha creat una pila on guardem totes les instruccions que operen amb arrays 'LD_SUBS' i 'STORE_SUBS' i en acabar el programa desempilem totes les instruccions i fem un backpatch amb el nou 'context_check()' dels arrays que ara s'ha actualitzat.
+Per tal de solucionar aixó s'ha creat una pila on guardem totes les instruccions que operen amb arrays `LD_SUBS` i `STORE_SUBS` i en acabar el programa desempilem totes les instruccions i fem un backpatch amb el nou `context_check()` dels arrays que ara s'ha actualitzat.
 
-Això però només funciona bé amb les funcions que els hi passem un array per referència des del main. No obstant això, quan es declarava una funció dintre d'una altra funció i des del main passàvem per referència a una funció i aquesta a la funció interior com en el següent exemple veuríem com en fer 'write b[0]' que ens hauria de printar el resultat de l'adreça del array global 'c[0]' , ens printaria el resultat de la variable 'a'
+Això però només funciona bé amb les funcions que els hi passem un array per referència des del main. No obstant això, quan es declarava una funció dintre d'una altra funció i des del main passàvem per referència a una funció i aquesta a la funció interior com en el següent exemple veuríem com en fer `write b[0]` que ens hauria de printar el resultat de l'adreça del array global `c[0]` , ens printaria el resultat de la variable `a`
 ```
 int a, b, c[5];
 a = 2;
@@ -136,7 +136,7 @@ def func(int[] a)¿
 ?;
 func(C);
 ```
-Fet produït perquè la modificació de les variables referència es feia des dels scopes més interiors fins als exteriors, és a dir, estaríem copiant al array 'b' l'adreça del array 'a' abans d'haver copiat al array 'a' l'adreça del array 'c'.
+Fet produït perquè la modificació de les variables referència es feia des dels scopes més interiors fins als exteriors, és a dir, estaríem copiant al array `b` l'adreça del array `a` abans d'haver copiat al array `a` l'adreça del array `c`.
 
 ##### Tercera i definitiva aproximació
 Aleshores ha sigut necessari crear una altra pila per les variables referència que hem de substituir per altres. Un cop arribem al punt on hem de fer la substitució el que fem és apilar aquesta substitució fins que s'acaba el programa. Així un cop acabat el programa podem fer primer les substitucions més exteriors simplement desempilant la pila tenim en compte que primer hem apilat les més interiors. Un cop acabat el programa el que fem és crear correctament totes les variables que són referència i després procedir a fer tots els backpatches de les instruccions relacionades ambs els arrays com hem comentat.
